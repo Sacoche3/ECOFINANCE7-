@@ -66,14 +66,15 @@
     <h1>Retrait d'Argent</h1>
     <div class="container">
         <div>
-            <label for="montant">Montant à retirer (minimum 1500 FCFA) :</label>
+            <label for="montant">Montant à retirer (minimum 1000 FCFA) :</label>
             <input type="number" id="montant" required>
         </div>
         <div>
             <label for="codeSecret">Code secret du retrait :</label>
             <input type="password" id="codeSecret" required>
         </div>
-        <p>Frais de retrait : 10 % du montant demandé.</p>
+        <p>Frais de retrait : 5 % du montant demandé.</p>
+        <p>Vous pouvez lancer votre retrait une seul fois pas jour, vous pouvez aussi lancer votre retrait 24/24 7/7</p>
         <button id="btnRetirer">Retirer</button>
         <div id="message"></div>
     </div>
@@ -105,7 +106,7 @@
 
                 // Vérification du montant minimum
                 if (montant < 1500) {
-                    document.getElementById("message").innerText = "Erreur : Le montant minimum de retrait est de 1500 FCFA.";
+                    document.getElementById("message").innerText = "Erreur : Le montant minimum de retrait est de 1000 FCFA.";
                     return;
                 }
 
