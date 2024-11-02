@@ -1,0 +1,102 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h3 {
+    margin-bottom: 10px;
+    color: #2c3e50;
+}
+
+.email-section, .balance-section, .claim-section, .telegram-section, .ecobank-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.telegram-section {
+    display: flex;
+    align-items: center;
+}
+
+.telegram-section img {
+    width: 30px;
+    height: 30px;
+    margin-right: 10px;
+}
+
+.telegram-link a {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+}
+
+.telegram-link a:hover {
+    text-decoration: underline;
+}
+
+.ecobank-section {
+    text-align: center;
+}
+
+.ecobank-section img {
+    max-width: 80%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.claim-section {
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    text-align: center;
+}
+
+#claim-button {
+    padding: 10px 20px;
+    background-color: #4CAF50; /* Couleur verte */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#claim-button:hover {
+    background-color: #45a049; /* Couleur verte plus foncée au survol */
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .container {
+        padding: 10px;
+    }
+
+    h3 {
+        font-size: 1.5em;
+    }
+
+    #claim-button {
+        width: 100%;
+    }
+}

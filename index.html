@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion / Inscription</title>
+    <style>
+        /* Style général */
+        body { 
+            font-family: Arial, sans-serif; 
+            background: linear-gradient(135deg, #84fab0, #8fd3f4); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0;
+            color: #333;
+        }
+
+        .container {
+            background-color: #ffffff;
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 40px 30px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 24px;
+            color: #4a90e2;
+            margin-bottom: 20px;
+        }
+
+        /* Onglets de navigation */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            cursor: pointer;
+            color: #4a90e2;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .tab:hover, .tab.active {
+            color: #333;
+            border-bottom: 2px solid #4a90e2;
+        }
+
+        /* Formulaire */
+        form { 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        input {
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #4a90e2;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            background-color: #4a90e2;
+            color: #fff;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #357abd;
+        }
+
+        p { 
+            font-size: 14px; 
+            color: #777; 
+        }
+
+        p a {
+            color: #4a90e2;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        p a:hover {
+            color: #357abd;
+        }
+
+        /* Masquer les formulaires non actifs */
+        .form-container {
+            display: none;
+        }
+
+        .form-container.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 id="formTitle">Connexion</h2>
+
+    <!-- Onglets de navigation -->
+    <div class="tabs">
+        <div class="tab active" id="loginTab">Connexion</div>
+        <div class="tab" id="signupTab">Inscription</div>
+    </div>
+
+    <!-- Formulaire de Connexion -->
+    <div id="loginForm" class="form-container active">
+        <form>
+            <input type="email" id="loginEmail" placeholder="Votre e-mail" required>
+            <input type="password" id="loginPassword" placeholder="Mot de passe (6 chiffres)" required minlength="6" maxlength="6">
+            <button type="submit">Se connecter</button>
+        </form>
+        <p>Pas de compte ? <a href="#" id="showSignup">Inscrivez-vous ici</a></p>
+    </div>
+
+    <!-- Formulaire d'Inscription -->
+    <div id="signupForm" class="form-container">
+        <form>
+            <input type="email" id="email" placeholder="Votre e-mail" required>
+            <input type="password" id="password" placeholder="Mot de passe (6 chiffres)" required minlength="6" maxlength="6">
+            <input type="password" id="confirmPassword" placeholder="Confirmer le mot de passe" required minlength="6" maxlength="6">
+            <input type="text" id="referralCode" placeholder="Code de parrainage (facultatif)">
+            <button type="submit">S'inscrire</button>
+        </form>
+        <p>Déjà un compte ? <a href="#" id="showLogin">Connectez-vous ici</a></p>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCPQvlxIjvJPkMZQ4qElkHla_xQ5QiZfFs",
+        authDomain: "paris-3df9f.firebaseapp.com",
+        databaseURL: "https://paris-3df9f-default-rtdb.firebaseio.com",
+        projectId: "paris-3df9f",
+        storageBucket: "paris-3df9f.appspot.com",
+        messagingSenderId: "365107415196",
+        appId: "1:365107415196:web:4c0021baec5a51a0f50559"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+
+    let currentUserReferralCode = null; // Variable pour stocker le code de parrainage de l'utilisateur connecté
+
+    // Fonction pour mettre à jour le code de parrainage dans le formulaire d'inscription
+    function updateReferralCodeField() {
+        if (currentUserReferralCode) {
+            document.getElementById("referralCode").value = currentUserReferralCode;
+        }
+    }
+
+    // Vérifier si un utilisateur est connecté
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            // Récupérer le code de parrainage de l'utilisateur connecté
+            const userRef = ref(database, 'users/' + user.uid);
+            const snapshot = await get(userRef);
+            const userData = snapshot.val();
+            if (userData) {
+                currentUserReferralCode = userData.userReferralCode; // Stocker le code de parrainage
+                updateReferralCodeField(); // Mettre à jour le champ de parrainage
+            }
+        }
+    });
+
+    // Fonction pour générer un code de parrainage unique
+    function generateReferralCode(length = 6) {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let code = "";
+        for (let i = 0; i < length; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return code;
+    }
+
+    // Fonction pour mettre à jour le total d'équipe du parrain
+    async function updateTeamTotal(referralCode) {
+        const userRef = ref(database, 'users');
+        const snapshot = await get(userRef);
+
+        let parrainId = null;
+
+        // Vérifier si le code de parrainage existe et obtenir l'ID de l'utilisateur
+        snapshot.forEach(childSnapshot => {
+            const userData = childSnapshot.val();
+            if (userData.userReferralCode === referralCode) {
+                parrainId = childSnapshot.key; // Obtenir l'ID de l'utilisateur qui a créé le code de parrainage
+            }
+        });
+
+        if (parrainId) {
+            // Mettre à jour le total d'équipe du parrain
+            const parrainRef = ref(database, 'users/' + parrainId);
+            await set(parrainRef, {
+                ...snapshot.val()[parrainId],
+                teamTotal: (snapshot.val()[parrainId].teamTotal || 0) + 1 // Incrémente le total d'équipe
+            });
+        }
+    }
+
+    document.querySelector("#signupForm form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const confirmPassword = document.getElementById("confirmPassword").value;
+        const referralCodeInput = document.getElementById("referralCode").value;
+
+        if (password !== confirmPassword) {
+            alert("Les mots de passe ne correspondent pas !");
+            return;
+        }
+
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // Générer un code de parrainage unique pour l'utilisateur
+            const userReferralCode = generateReferralCode();
+
+            // Enregistrer les données de l'utilisateur dans la base de données
+            await set(ref(database, 'users/' + user.uid), {
+                email: email,
+                balance: 0,
+                userReferralCode: userReferralCode,
+                referralCodeUsed: referralCodeInput || null,
+                teamTotal: 0 // Initialiser le total d'équipe
+            });
+
+            // Mettre à jour le total d'équipe si un code de parrainage a été utilisé
+            if (referralCodeInput) {
+                await updateTeamTotal(referralCodeInput);
+            }
+
+           alert("Inscription réussie ! Votre code de parrainage est : " + userReferralCode);
+            // Réinitialiser le formulaire après l'inscription
+            document.getElementById("email").value = "";
+            document.getElementById("password").value = "";
+            document.getElementById("confirmPassword").value = "";
+            document.getElementById("referralCode").value = "";
+            document.getElementById("loginTab").click(); // Rediriger vers l'onglet de connexion
+        } catch (error) {
+            console.error("Erreur lors de l'inscription :", error);
+            alert("Erreur lors de l'inscription : " + error.message);
+        }
+    });
+
+    document.querySelector("#loginForm form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById("loginEmail").value;
+        const password = document.getElementById("loginPassword").value;
+
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            alert("Connexion réussie !");
+            // Rediriger vers la page d'accueil ou une autre page après la connexion
+            window.location.href = "balance.html";
+        } catch (error) {
+            console.error("Erreur lors de la connexion :", error);
+            alert("Erreur lors de la connexion : " + error.message);
+        }
+    });
+
+    // Gérer le changement d'onglet entre Connexion et Inscription
+    document.getElementById("showSignup").addEventListener("click", () => {
+        document.getElementById("loginForm").classList.remove("active");
+        document.getElementById("signupForm").classList.add("active");
+        document.getElementById("formTitle").innerText = "Inscription";
+        document.getElementById("signupTab").classList.add("active");
+        document.getElementById("loginTab").classList.remove("active");
+    });
+
+    document.getElementById("showLogin").addEventListener("click", () => {
+        document.getElementById("signupForm").classList.remove("active");
+        document.getElementById("loginForm").classList.add("active");
+        document.getElementById("formTitle").innerText = "Connexion";
+        document.getElementById("loginTab").classList.add("active");
+        document.getElementById("signupTab").classList.remove("active");
+    });
+</script>
+
+</body>
+</html>

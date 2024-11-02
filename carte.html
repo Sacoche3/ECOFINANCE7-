@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informations du Portefeuille</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .info {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            color: #333;
+        }
+        #message {
+            text-align: center;
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Informations du Portefeuille</h1>
+        <div class="info">
+            <p><strong>Numéro de téléphone :</strong> <span id="numeroAffiche">Non lié</span></p>
+            <p><strong>Opérateur :</strong> <span id="operateurAffiche">Non défini</span></p>
+        </div>
+        <div id="message"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPQvlxIjvJPkMZQ4qElkHla_xQ5QiZfFs",
+            authDomain: "paris-3df9f.firebaseapp.com",
+            databaseURL: "https://paris-3df9f-default-rtdb.firebaseio.com",
+            projectId: "paris-3df9f",
+            storageBucket: "paris-3df9f.appspot.com",
+            messagingSenderId: "365107415196",
+            appId: "1:365107415196:web:4c0021baec5a51a0f50559"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        // Vérifier l'état de l'authentification
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userRef = ref(database, 'users/' + user.uid);
+                const snapshot = await get(userRef);
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    const numero = data.portefeuille?.numero || 'Non lié';
+                    const operateur = data.portefeuille?.operateur || 'Non défini';
+
+                    document.getElementById("numeroAffiche").innerText = numero;
+                    document.getElementById("operateurAffiche").innerText = operateur;
+                } else {
+                    document.getElementById("message").innerText = "Aucune information trouvée.";
+                }
+            } else {
+                document.getElementById("message").innerText = "Veuillez vous connecter.";
+            }
+        });
+    </script>
+</body>
+</html>

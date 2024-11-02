@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Historique des Recharges</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #eef1f5; /* Fond gris clair */
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff; /* Fond blanc pour le conteneur */
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 32px; /* Taille de police agrandie */
+        }
+        .history-item {
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        .history-item:hover {
+            transform: translateY(-5px); /* Effet de levage au survol */
+        }
+        .history-item p {
+            margin: 5px 0;
+            font-size: 16px;
+            color: #555;
+        }
+        .action-button {
+            background-color: #dc3545; /* Couleur de suppression */
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+            display: inline-block; /* Pour aligner avec le texte */
+        }
+        .action-button:hover {
+            background-color: #c82333; /* Couleur au survol */
+        }
+        .clear-button {
+            background-color: #28a745; /* Couleur de succès */
+            margin-top: 20px;
+            width: 100%;
+        }
+        .clear-button:hover {
+            background-color: #218838;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #888;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Historique des Recharges</h2>
+    <div id="rechargeHistoryContainer">
+        <!-- Les éléments d'historique seront ajoutés dynamiquement avec JavaScript -->
+    </div>
+    <button id="clearHistory" class="action-button clear-button">Supprimer Tout l'Historique</button>
+</div>
+
+<footer>
+    <p>&copy; 2024 Votre Nom | Tous droits réservés</p>
+</footer>
+
+<script>
+    function loadRechargeHistory() {
+        var rechargeHistory = JSON.parse(localStorage.getItem('rechargeHistory')) || [];
+        var container = document.getElementById('rechargeHistoryContainer');
+
+        // Vider le conteneur avant de le remplir
+        container.innerHTML = '';
+
+        rechargeHistory.forEach(function(record, index) {
+            var item = document.createElement('div');
+            item.className = 'history-item';
+            item.innerHTML = `
+                <p><strong>Montant :</strong> ${record.amount} FCFA</p>
+                <p><strong>Mode de Paiement :</strong> ${record.paymentMethod}</p>
+                <p><strong>Numéro de Paiement :</strong> ${record.paymentNumber}</p>
+                <p><strong>ID de Transaction :</strong> ${record.transactionId}</p>
+                <p><strong>Date :</strong> ${record.date}</p>
+                <p><strong>Statut :</strong> ${record.status}</p>
+                <button class="action-button" onclick="deleteRecord(${index})">Supprimer</button>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    function deleteRecord(index) {
+        var rechargeHistory = JSON.parse(localStorage.getItem('rechargeHistory')) || [];
+        rechargeHistory.splice(index, 1); // Supprimer l'enregistrement à l'index spécifié
+        localStorage.setItem('rechargeHistory', JSON.stringify(rechargeHistory));
+        loadRechargeHistory(); // Recharger l'historique après suppression
+    }
+
+    function clearAllHistory() {
+        localStorage.removeItem('rechargeHistory');
+        loadRechargeHistory(); // Recharger l'historique après suppression
+    }
+
+    document.getElementById('clearHistory').onclick = clearAllHistory;
+
+    // Charger l'historique des recharges au chargement de la page
+    loadRechargeHistory();
+</script>
+
+</body>
+</html>

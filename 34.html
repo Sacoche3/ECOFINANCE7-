@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Afficher le Code de Parrainage</title>
+    <script type="module">
+        // Importation des modules Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js";
+
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFREc4PyC6VTYgXN3eEV9_AYpVo6nkyco",
+            authDomain: "ciaxe-727b1.firebaseapp.com",
+            databaseURL: "https://ciaxe-727b1-default-rtdb.firebaseio.com",
+            projectId: "ciaxe-727b1",
+            storageBucket: "ciaxe-727b1.firebasestorage.app",
+            messagingSenderId: "52732576686",
+            appId: "1:52732576686:web:70f5d27fc58bc5bd31fe3f"
+        };
+
+        // Initialisation de Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const database = getDatabase();
+
+        // Vérification de l'état de l'utilisateur
+        onAuthStateChanged(auth, (user) => {
+            const messageDiv = document.getElementById('message');
+            const codeDiv = document.getElementById('codeParrainage');
+
+            if (user) {
+                messageDiv.innerText = `Utilisateur connecté : ${user.email}`;
+                
+                // Récupérer le code de parrainage de l'utilisateur
+                const userId = user.uid; // ID de l'utilisateur connecté
+                const userRef = ref(database, 'users/' + userId); // Chemin vers les données de l'utilisateur
+
+                get(userRef).then((snapshot) => {
+                    if (snapshot.exists()) {
+                        const userData = snapshot.val();
+                        codeDiv.innerText = `Votre code de parrainage est : ${userData.codeParrainage}`;
+                    } else {
+                        codeDiv.innerText = "Aucun code de parrainage trouvé.";
+                    }
+                }).catch((error) => {
+                    console.error("Erreur lors de la récupération des données :", error);
+                    codeDiv.innerText = "Erreur lors de la récupération des données.";
+                });
+            } else {
+                messageDiv.innerText = "Aucun utilisateur connecté.";
+                codeDiv.innerText = "";
+            }
+        });
+    </script>
+</head>
+<body>
+    <h1>Afficher le Code de Parrainage</h1>
+    <div id="message">Chargement...</div>
+    <div id="codeParrainage"></div>
+</body>
+</html>

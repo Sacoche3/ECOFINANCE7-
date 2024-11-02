@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historique des Retraits</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            text-align: center;
+        }
+        .historique-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .montant {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .details {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+        #messageContainer {
+            color: red;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Historique des Retraits</h1>
+    <div id="messageContainer"></div>
+    <div id="historiqueContainer"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPQvlxIjvJPkMZQ4qElkHla_xQ5QiZfFs",
+            authDomain: "paris-3df9f.firebaseapp.com",
+            databaseURL: "https://paris-3df9f-default-rtdb.firebaseio.com",
+            projectId: "paris-3df9f",
+            storageBucket: "paris-3df9f.appspot.com",
+            messagingSenderId: "365107415196",
+            appId: "1:365107415196:web:4c0021baec5a51a0f50559"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        function formaterDate(dateString) {
+            return new Date(dateString).toLocaleString('fr-FR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        async function recupererHistoriqueRetraits() {
+            const user = auth.currentUser;
+            const messageContainer = document.getElementById("messageContainer");
+            const historiqueContainer = document.getElementById("historiqueContainer");
+            historiqueContainer.innerHTML = ''; // Vider le conteneur existant
+            messageContainer.innerHTML = ''; // Vider le message existant
+
+            if (user) {
+                try {
+                    const historiqueRef = ref(database, 'users/' + user.uid + '/historiqueRetraits');
+                    const snapshot = await get(historiqueRef);
+
+                    if (snapshot.exists()) {
+                        const historiqueData = snapshot.val();
+                        const entries = Object.entries(historiqueData)
+                            .sort(([dateA], [dateB]) => new Date(dateB) - new Date(dateA));
+
+                        entries.forEach(([date, details]) => {
+                            const item = document.createElement("div");
+                            item.className = "historique-item";
+                            item.innerHTML = `
+                                <div class="montant">${details.montant.toLocaleString()} FCFA</div>
+                                <div class="details">
+                                    <div><strong>Frais :</strong> ${details.frais ? details.frais.toLocaleString() + ' FCFA' : 'N/A'}</div>
+                                    <div><strong>Date :</strong> ${formaterDate(details.date)}</div>
+                                    <div><strong>Statut :</strong> en attente</div> <!-- Modification ici -->
+                                </div>
+                            `;
+                            historiqueContainer.appendChild(item);
+                        });
+                    } else {
+                        messageContainer.innerText = "Aucun retrait effectué.";
+                    }
+                } catch (error) {
+                    console.error("Erreur de récupération de l'historique :", error);
+                    messageContainer.innerText = "Impossible de charger l'historique : " + error.message;
+                }
+            } else {
+                // Aucune action n'est nécessaire ici pour les utilisateurs non connectés
+                historiqueContainer.innerHTML = `<div>Aucun retrait effectué.</div>`;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", recupererHistoriqueRetraits);
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                recupererHistoriqueRetraits();
+            } else {
+                // Aucune action n'est nécessaire ici pour les utilisateurs non connectés
+                document.getElementById("historiqueContainer").innerHTML = `<div>Aucun retrait effectué.</div>`;
+            }
+        });
+    </script>
+</body>
+</html>

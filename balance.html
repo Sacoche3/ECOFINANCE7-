@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Solde</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --background-color: #f1f5f9;
+            --card-background: #ffffff;
+            --text-color: #1e293b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--card-background);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            margin-bottom: 20px;
+        }
+
+        .profile-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .profile-icon {
+            background: var(--primary-color);
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-info h2 {
+            font-size: 16px;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+
+        .profile-info p {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .balance-card {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .balance-label {
+            font-size: 16px;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        .balance-amount {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .telegram-card {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .telegram-card a {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .bank-card {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 160px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-button {
+            background: var(--card-background);
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            color: var(--text-color);
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 4px rgb(0 0 0 / 0.1);
+        }
+
+        .action-button:hover {
+            background-color: #f1f5f9;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-background);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 -2px 10px rgb(0 0 0 / 0.1);
+        }
+
+        .footer-button {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .center-button {
+            background: var(--primary-color);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgb(0 0 0 / 0.1);
+        }
+
+        .popup-menu {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card-background);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 4px 20px rgb(0 0 0 / 0.15);
+            display: none;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .popup-menu-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .popup-button {
+            background: #f8fafc;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            color: var(--text-color);
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .popup-button:hover {
+            background: #f1f5f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card profile-card">
+            <div class="profile-icon">👤</div>
+            <div class="profile-info">
+                <h2>Bienvenue</h2>
+                <p id="email">Chargement de l'email...</p>
+            </div>
+        </div>
+
+        <div class="card balance-card">
+            <div class="balance-label">Votre Solde</div>
+            <div class="balance-amount" id="balance">Chargement...</div>
+        </div>
+
+        <div class="card telegram-card">
+            <a href="https://t.me/+E0fjkVdDiTFhYTI8">
+                <span>📱</span>
+                <span>Rejoignez notre groupe Telegram</span>
+            </a>
+        </div>
+
+        <div class="card bank-card">
+            <h3>ECOFINANCE</h3>
+        </div>
+    </div>
+
+    <div class="popup-menu" id="popup-section">
+        <div class="popup-menu-grid">
+            <a href="recharge.html"><button class="popup-button">Recharge</button></a>
+            <a href="retrait.html"><button class="popup-button">Retrait</button></a>
+            <a href="lier_portefeuille.html"><button class="popup-button">Compte</button></a>
+            <a href="historique.html"><button class="popup-button">Historique</button></a>
+            <a href="star.html"><button class="popup-button">Statistique</button></a>
+        </div>
+    </div>
+
+    <div class="footer">
+        <a href="balance.html" class="footer-button">
+            <span>📊</span>
+            <span>Dashbo</span>
+        </a>
+        <a href="historique_retrait.html" class="footer-button">
+            <span>📜</span>
+            <span>Historiq</span>
+        </a>
+        <button class="center-button" onclick="togglePopup()">Ⓜ️</button>
+        <a href="carte.html" class="footer-button">
+            <span>💳</span>
+            <span>Carte</span>
+        </a>
+        <a href="equipe.html" class="footer-button">
+            <span>👥</span>
+            <span>Équipe</span>
+        </a>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPQvlxIjvJPkMZQ4qElkHla_xQ5QiZfFs",
+            authDomain: "paris-3df9f.firebaseapp.com",
+            databaseURL: "https://paris-3df9f-default-rtdb.firebaseio.com",
+            projectId: "paris-3df9f",
+            storageBucket: "paris-3df9f.appspot.com",
+            messagingSenderId: "365107415196",
+            appId: "1:365107415196:web:4c0021baec5a51a0f50559"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        async function initializeUserAccount(user) {
+            const userRef = ref(database, 'users/' + user.uid);
+            const snapshot = await get(userRef);
+            if (!snapshot.exists()) {
+                await set(userRef, {
+                    email: user.email,
+                    balance: 200,
+                    createdAt: new Date().toISOString()
+                });
+                console.log("Nouveau compte créé avec 200F");
+            }
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                document.getElementById("email").innerText = user.email;
+                await initializeUserAccount(user);
+                const userRef = ref(database, 'users/' + user.uid);
+                onValue(userRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const userData = snapshot.val();
+                        document.getElementById("balance").innerText = `${userData.balance} FCFA`;
+                    }
+                });
+            } else {
+                document.getElementById("balance").innerText = "Veuillez vous connecter";
+                document.getElementById("email").innerText = "Non connecté";
+            }
+        });
+
+        window.createAccount = async function(email, password) {
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                console.error("Erreur lors de la création du compte:", error);
+                throw error;
+            }
+        }
+    </script>
+
+    <script>
+        function togglePopup() {
+            const popup = document.getElementById("popup-section");
+            popup.style.display = popup.style.display === "none" || popup.style.display === "" ? "block" : "none";
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("popup-section").style.display = "none";
+        });
+    </script>
+</body>
+</html> 

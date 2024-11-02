@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lier un Portefeuille</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        input[type="text"], input[type="password"], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #message {
+            margin-top: 15px;
+            text-align: center;
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lier un Portefeuille</h1>
+    <div class="container">
+        <div>
+            <label for="numero">Numéro de téléphone :</label>
+            <input type="text" id="numero" required>
+        </div>
+        <div>
+            <label for="operateur">Opérateur :</label>
+            <select id="operateur" required>
+                <option value="Moov">Moov</option>
+                <option value="MTN">MTN</option>
+                <option value="Orange">Orange</option>
+                <option value="Wave">Wave</option>
+                <option value="USDT">USDT</option>
+            </select>
+        </div>
+        <div>
+            <label for="codeSecret">Code secret du retrait :</label>
+            <input type="password" id="codeSecret" required>
+        </div>
+        <button id="btnLier">Lier le Portefeuille</button>
+        <div id="message"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPQvlxIjvJPkMZQ4qElkHla_xQ5QiZfFs",
+            authDomain: "paris-3df9f.firebaseapp.com",
+            databaseURL: "https://paris-3df9f-default-rtdb.firebaseio.com",
+            projectId: "paris-3df9f",
+            storageBucket: "paris-3df9f.appspot.com",
+            messagingSenderId: "365107415196",
+            appId: "1:365107415196:web:4c0021baec5a51a0f50559"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        document.getElementById("btnLier").addEventListener("click", async () => {
+            const user = auth.currentUser;
+            if (user) {
+                const numero = document.getElementById("numero").value;
+                const operateur = document.getElementById("operateur").value;
+                const codeSecret = document.getElementById("codeSecret").value;
+
+                const userRef = ref(database, 'users/' + user.uid);
+                await update(userRef, {
+                    portefeuille: {
+                        numero: numero,
+                        operateur: operateur
+                    },
+                    codeSecret: codeSecret // Optionnel, selon votre logique
+                });
+
+                document.getElementById("message").innerText = "Portefeuille lié avec succès.";
+            } else {
+                document.getElementById("message").innerText = "Veuillez vous connecter.";
+            }
+        });
+    </script>
+</body>
+</html>

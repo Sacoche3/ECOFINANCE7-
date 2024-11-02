@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Recharge de Solde</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f7fa; /* Fond de page uniforme */
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px; /* Réduire la largeur du conteneur */
+            margin: 0 auto; /* Centrer le conteneur */
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center; /* Centrer le texte dans le conteneur */
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .info {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #555;
+            background-color: #e3f2fd; /* Fond légèrement coloré */
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #bbdefb; /* Bordure pour définir la section */
+        }
+        input, select {
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px; /* Réduction du rayon des bords */
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 12px;
+            margin-top: 15px;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            width: 100%; /* Le bouton occupe toute la largeur */
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Recharge de Solde</h2>
+    <div class="info">
+        Montant minimum de dépôt: <strong>500 FCFA</strong>
+    </div>
+    <form id="rechargeForm">
+        <input type="number" id="amount" name="amount" placeholder="Montant à recharger" min="500" required>
+        <select id="paymentMethod" name="paymentMethod" required>
+            <option value="">Veuillez choisir un mode de paiement</option>
+            <option value="mtn">MTN</option>
+            <option value="moov">Moov</option>
+            <option value="orange">Orange</option>
+            <option value="wave">WAVE</option>
+            <option value="usd">USDT</option>
+        </select>
+        <button type="submit">validé</button>
+    </form>
+    <div class="footer">
+        Pour toute assistance, contactez notre service client.
+    </div>
+</div>
+
+<script>
+    document.getElementById('rechargeForm').onsubmit = function(event) {
+        event.preventDefault();
+        var paymentMethod = document.getElementById('paymentMethod').value;
+        var amount = document.getElementById('amount').value;
+        var paymentDetails = {
+            mtn: '+225 0554049897',
+            moov: '0140719995',
+            orange: 'indisponible',
+            wave: '0554049897',
+            usd: '0x1f6deDA99A476Dc6CA40A66291186cbbe7319917'
+        };
+        
+        var selectedNumber = paymentDetails[paymentMethod];
+        if (selectedNumber) {
+            window.location.href = `confirmation.html?amount=${amount}&paymentMethod=${paymentMethod}&number=${encodeURIComponent(selectedNumber)}`;
+        } else {
+            alert('Mode de paiement non disponible.');
+        }
+    };
+</script>
+
+</body>
+</html>

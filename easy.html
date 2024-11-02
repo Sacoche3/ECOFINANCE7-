@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiques de la Semaine - Graphique Continu</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 1em;
+            width: 100%;
+            text-align: center;
+            font-size: 24px;
+        }
+        .chart-container {
+            width: 80%;
+            max-width: 600px;
+            margin-top: 2em;
+        }
+        #balance, #lastClaim {
+            font-size: 18px;
+            color: #333;
+            margin: 1em 0;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #popup-section {
+            display: none; /* Masqué par défaut */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">Statistiques de la Semaine</div>
+    
+    <div class="chart-container">
+        <canvas id="weeklyChart"></canvas>
+    </div>
+
+    <div id="balance">0.00 FCFA</div> <!-- Solde affiché -->
+    <div id="lastClaim">Dernière réclamation : Jamais</div> <!-- Dernière réclamation -->
+    
+    <button onclick="reclamer()">Réclamer 5 %</button> <!-- Bouton de réclamation -->
+
+    <div id="popup-section">
+        <p>Réclamation effectuée !</p>
+        <button onclick="togglePopup()">Fermer</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPQvlxIjvJPkMZQ4qElkHla_xQ5QiZfFs",
+            authDomain: "paris-3df9f.firebaseapp.com",
+            databaseURL: "https://paris-3df9f-default-rtdb.firebaseio.com",
+            projectId: "paris-3df9f",
+            storageBucket: "paris-3df9f.appspot.com",
+            messagingSenderId: "365107415196",
+            appId: "1:365107415196:web:4c0021baec5a51a0f50559"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                const userRef = ref(database, 'users/' + user.uid);
+                const snapshot = await get(userRef);
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    document.getElementById("balance").innerText = userData.balance.toFixed(2) + " FCFA"; // Affichage du solde
+                } else {
+                    document.getElementById("balance").innerText = "Aucun solde trouvé.";
+                }
+            } else {
+                document.getElementById("balance").innerText = "Veuillez vous connecter.";
+            }
+        });
+
+        function reclamer() {
+            const currentBalance = parseFloat(document.getElementById("balance").innerText.replace(" FCFA", ""));
+            const lastClaimDate = localStorage.getItem("lastClaimDate");
+            const today = new Date().toLocaleDateString();
+
+            if (lastClaimDate === today) {
+                alert("Vous avez déjà réclamé aujourd'hui !");
+                return;
+            }
+
+            const reward = currentBalance * 0.05; // 5 % du solde
+            const newBalance = currentBalance + reward;
+            document.getElementById("balance").innerText = newBalance.toFixed(2) + " FCFA"; // Mise à jour du solde
+
+            localStorage.setItem("lastClaimDate", today); // Mémoriser la date de la dernière réclamation
+            togglePopup(); // Afficher le popup de réclamation
+        }
+
+        // Fonction pour basculer l'affichage de la section popup
+        function togglePopup() {
+            const popup = document.getElementById("popup-section");
+            if (popup.style.display === "none" || popup.style.display === "") {
+                popup.style.display = "block"; // Afficher le popup
+            } else {
+                popup.style.display = "none"; // Masquer le popup
+            }
+        }
+
+        // Masquer le popup au chargement de la page
+        document.addEventListener("DOMContentLoaded", function() {
+            const popup = document.getElementById("popup-section");
+            popup.style.display = "none"; // Masquer le popup au départ
+        });
+    </script>
+</body>
+</html>

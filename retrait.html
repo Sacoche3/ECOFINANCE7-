@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retrait</title>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        input[type="number"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #message {
+            margin-top: 15px;
+            text-align: center;
+            color: #dc3545;
+        }
+        p {
+            text-align: center;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>Retrait d'Argent</h1>
+    <div class="container">
+        <div>
+            <label for="montant">Montant à retirer (minimum 1500 FCFA) :</label>
+            <input type="number" id="montant" required>
+        </div>
+        <div>
+            <label for="codeSecret">Code secret du retrait :</label>
+            <input type="password" id="codeSecret" required>
+        </div>
+        <p>Frais de retrait : 10 % du montant demandé.</p>
+        <button id="btnRetirer">Retirer</button>
+        <div id="message"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getDatabase, ref, get, update, set } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPQvlxIjvJPkMZQ4qElkHla_xQ5QiZfFs",
+            authDomain: "paris-3df9f.firebaseapp.com",
+            databaseURL: "https://paris-3df9f-default-rtdb.firebaseio.com",
+            projectId: "paris-3df9f",
+            storageBucket: "paris-3df9f.appspot.com",
+            messagingSenderId: "365107415196",
+            appId: "1:365107415196:web:4c0021baec5a51a0f50559"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        document.getElementById("btnRetirer").addEventListener("click", async () => {
+            const user = auth.currentUser;
+            if (user) {
+                const montant = parseFloat(document.getElementById("montant").value);
+                const codeSecret = document.getElementById("codeSecret").value;
+
+                // Vérification du montant minimum
+                if (montant < 1500) {
+                    document.getElementById("message").innerText = "Erreur : Le montant minimum de retrait est de 1500 FCFA.";
+                    return;
+                }
+
+                // Récupérer les données de l'utilisateur
+                const userRef = ref(database, 'users/' + user.uid);
+                const snapshot = await get(userRef);
+
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    const fraisRetrait = montant * 0.10; // 10 % de frais
+                    const montantTotalRetrait = montant + fraisRetrait; // Montant total à déduire
+
+                    // Vérifier si le code secret est correct et si le solde est suffisant
+                    if (userData.codeSecret === codeSecret && userData.balance >= montantTotalRetrait) {
+                        // Mettre à jour le solde de l'utilisateur
+                        const newBalance = userData.balance - montantTotalRetrait;
+                        await update(userRef, { balance: newBalance });
+
+                        // Enregistrer le retrait dans l'historique
+                        const historiqueRef = ref(database, 'users/' + user.uid + '/historiqueRetraits/' + Date.now());
+                        await set(historiqueRef, {
+                            montant: montant,
+                            frais: fraisRetrait,
+                            statut: 'Effectué',
+                            date: new Date().toISOString()
+                        });
+
+                        document.getElementById("message").innerText = "Retrait effectué avec succès.";
+                    } else {
+                        document.getElementById("message").innerText = "Erreur : Code secret incorrect ou solde insuffisant.";
+                    }
+                } else {
+                    document.getElementById("message").innerText = "Aucun utilisateur trouvé.";
+                }
+            } else {
+                document.getElementById("message").innerText = "Veuillez vous connecter.";
+            }
+        });
+    </script>
+</body>
+</html>

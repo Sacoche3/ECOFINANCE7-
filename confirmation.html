@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Confirmation de Paiement</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #e9ecef; /* Fond de page doux */
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 500px;
+            margin: 100px auto; /* Centrer verticalement avec un peu d'espace */
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        h2 {
+            color: #343a40; /* Couleur sombre pour le titre */
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 24px;
+        }
+        .info {
+            margin-bottom: 30px;
+            font-size: 16px;
+            color: #495057; /* Couleur du texte informatif */
+        }
+        input {
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ced4da;
+            border-radius: 25px;
+            font-size: 14px;
+            box-sizing: border-box;
+            width: 100%;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            border-color: #007bff; /* Couleur de la bordure au focus */
+            outline: none; /* Retirer le contour par défaut */
+        }
+        button {
+            padding: 12px;
+            margin-top: 10px;
+            background-color: #28a745; /* Vert pour le bouton */
+            color: #ffffff;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s; /* Transition pour le bouton */
+            width: 100%; /* Bouton plein largeur */
+        }
+        button:hover {
+            background-color: #218838; /* Couleur au survol */
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #6c757d; /* Couleur du texte du pied de page */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Confirmation de Paiement</h2>
+    <div class="info">
+        <p>Numéro de Paiement Sélectionné : <strong id="paymentNumber"></strong></p>
+        <button id="copyNumber">Copier le Numéro de Paiement</button>
+    </div>
+    <form id="confirmationForm">
+        <input type="text" id="paymentInput" name="paymentInput" placeholder="Entrez le numéro de paiement" required>
+        <input type="text" id="transactionId" name="transactionId" placeholder="ID de Transaction" required>
+        <button type="submit">Confirmer</button>
+    </form>
+    <div class="footer">
+        Pour toute assistance, veuillez contacter notre service client.
+    </div>
+</div>
+
+<script>
+    // Récupérer les paramètres de l'URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const amount = urlParams.get('amount');
+    const paymentMethod = urlParams.get('paymentMethod');
+    const paymentNumber = decodeURIComponent(urlParams.get('number'));
+
+    document.getElementById('paymentNumber').textContent = paymentNumber;
+    document.getElementById('paymentInput').value = paymentNumber;
+
+    document.getElementById('copyNumber').onclick = function() {
+        navigator.clipboard.writeText(paymentNumber).then(function() {
+            alert('Numéro de paiement copié dans le presse-papiers.');
+        });
+    };
+
+    document.getElementById('confirmationForm').onsubmit = function(event) {
+        event.preventDefault();
+
+        var enteredPaymentNumber = document.getElementById('paymentInput').value;
+        var transactionId = document.getElementById('transactionId').value;
+
+        // Ajouter les informations de recharge à l'historique des recharges
+        var rechargeHistory = JSON.parse(localStorage.getItem('rechargeHistory')) || [];
+        rechargeHistory.push({
+            amount: amount,
+            paymentMethod: paymentMethod,
+            paymentNumber: enteredPaymentNumber,
+            transactionId: transactionId,
+            date: new Date().toLocaleString(),
+            status: 'En attente'
+        });
+        localStorage.setItem('rechargeHistory', JSON.stringify(rechargeHistory));
+
+        alert('Votre paiement a été confirmé. Merci !');
+
+        // Rediriger vers la page d'historique des recharges
+        window.location.href = 'historique-recharge.html';
+    };
+
+    // Réinitialiser le champ après 14 minutes
+    setTimeout(function() {
+        document.getElementById('paymentInput').value = '';
+        document.getElementById('transactionId').value = '';
+        alert('Les champs ont été réinitialisés après 14 minutes.');
+    }, 14 * 60 * 1000); // 14 minutes en millisecondes
+</script>
+
+</body>
+</html>

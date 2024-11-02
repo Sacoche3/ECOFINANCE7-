@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord de Parrainage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+            width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .section {
+            margin: 15px 0;
+            padding: 10px;
+            border: 1px solid #007bff;
+            border-radius: 5px;
+            background-color: #e9f7ff;
+        }
+        p {
+            font-size: 18px;
+            color: #555;
+            margin: 5px 0;
+        }
+        #referralCode, #referralLink {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            cursor: pointer;
+            user-select: none;
+        }
+        #referralCode:hover, #referralLink:hover {
+            text-decoration: underline;
+        }
+        #copyMessage, #copyLinkMessage {
+            font-size: 14px;
+            color: green;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Gagner 5 % sur le rechargement de votre filleul </h2>
+
+    <div class="section" id="teamTotal">
+        <p>Total d'Équipe :</p>
+        <p id="referralCount">0</p>
+    </div>
+
+    <div class="section" id="teamCommission">
+        <p>Commission de l'Équipe :</p>
+        <p id="commissionBalance">0 FCFA</p>
+    </div>
+
+    <div class="section" id="referralSection">
+        <p>Votre Code de Parrainage :</p>
+        <p id="referralCode">Chargement...</p>
+        <p id="copyMessage">Code copié !</p>
+    </div>
+    
+    <div class="section" id="linkSection">
+        <p>Votre Lien de Parrainage :</p>
+        <p id="referralLink">Chargement...</p>
+        <p id="copyLinkMessage">Lien copié !</p>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCPQvlxIjvJPkMZQ4qElkHla_xQ5QiZfFs",
+        authDomain: "paris-3df9f.firebaseapp.com",
+        databaseURL: "https://paris-3df9f-default-rtdb.firebaseio.com",
+        projectId: "paris-3df9f",
+        storageBucket: "paris-3df9f.appspot.com",
+        messagingSenderId: "365107415196",
+        appId: "1:365107415196:web:4c0021baec5a51a0f50559"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+
+    // Fonction pour mettre à jour la commission
+    async function updateCommission(userRef, currentBalance, newCommission) {
+        try {
+            await update(userRef, {
+                commissionBalance: currentBalance + newCommission
+            });
+            document.getElementById("commissionBalance").innerText = `${currentBalance + newCommission} FCFA`;
+        } catch (error) {
+            console.error("Erreur lors de la mise à jour de la commission:", error);
+        }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            try {
+                const userRef = ref(database, 'users/' + user.uid);
+                const snapshot = await get(userRef);
+                
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    const referralCode = userData.userReferralCode;
+                    const commissionBalance = userData.commissionBalance || 0;
+
+                    document.getElementById("referralCode").innerText = referralCode;
+                    document.getElementById("commissionBalance").innerText = `${commissionBalance} FCFA`;
+
+                    const referralLink = `${window.location.origin}/signup.html?referral=${referralCode}`;
+                    document.getElementById("referralLink").innerText = referralLink;
+
+                    // Gestion des parrainages et commissions
+                    const allUsersRef = ref(database, 'users/');
+                    const allUsersSnapshot = await get(allUsersRef);
+                    let count = 0;
+
+                    if (allUsersSnapshot.exists()) {
+                        const users = allUsersSnapshot.val();
+                        for (const uid in users) {
+                            const referredUser = users[uid];
+                            if (referredUser.referralCodeUsed === referralCode) {
+                                count++;
+                                
+                                // Vérifier si l'utilisateur a une balance positive et n'a pas encore généré de commission
+                                if (referredUser.balance > 0 && !referredUser.hasCommissionBeenPaid) {
+                                    const rechargeAmount = referredUser.balance;
+                                    const commission = rechargeAmount * 0.05;
+
+                                    // Marquer la commission comme payée pour cet utilisateur
+                                    await update(ref(database, `users/${uid}`), {
+                                        hasCommissionBeenPaid: true
+                                    });
+
+                                    // Mettre à jour la commission du parrain
+                                    await updateCommission(userRef, commissionBalance, commission);
+                                }
+                            }
+                        }
+                    }
+
+                    document.getElementById("referralCount").innerText = count;
+                } else {
+                    document.getElementById("referralCode").innerText = "Code non disponible.";
+                }
+            } catch (error) {
+                console.error("Erreur:", error);
+                document.getElementById("referralCode").innerText = "Erreur de chargement.";
+            }
+        } else {
+            document.getElementById("referralCode").innerText = "Veuillez vous connecter.";
+            alert("Vous devez être connecté pour voir votre code de parrainage.");
+            window.location.href = "login.html";
+        }
+    });
+
+    // Copier le code de parrainage
+    document.getElementById("referralCode").onclick = function() {
+        const code = this.innerText;
+        navigator.clipboard.writeText(code).then(() => {
+            document.getElementById("copyMessage").style.display = "block";
+            setTimeout(() => {
+                document.getElementById("copyMessage").style.display = "none";
+            }, 2000);
+        });
+    };
+
+    // Copier le lien de parrainage
+    document.getElementById("referralLink").onclick = function() {
+        const link = this.innerText;
+        navigator.clipboard.writeText(link).then(() => {
+            document.getElementById("copyLinkMessage").style.display = "block";
+            setTimeout(() => {
+                document.getElementById("copyLinkMessage").style.display = "none";
+            }, 2000);
+        });
+    };
+</script>
+
+</body>
+</html>

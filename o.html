@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiques de la Semaine - Graphique Continu</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPQvlxIjvJPkMZQ4qElkHla_xQ5QiZfFs",
+            authDomain: "paris-3df9f.firebaseapp.com",
+            databaseURL: "https://paris-3df9f-default-rtdb.firebaseio.com",
+            projectId: "paris-3df9f",
+            storageBucket: "paris-3df9f.appspot.com",
+            messagingSenderId: "365107415196",
+            appId: "1:365107415196:web:4c0021baec5a51a0f50559"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        let totalBets = 0; // Variable pour suivre le total des mises
+
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                const userRef = ref(database, 'users/' + user.uid);
+                const snapshot = await get(userRef);
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    document.getElementById("balance").innerText = userData.balance.toFixed(2) + " FCFA";
+                    document.getElementById("lastClaim").innerText = userData.lastClaim || "Jamais";
+                    totalBets = userData.totalBets || 0; // Récupérer le total des mises de la base de données
+                    document.getElementById("totalBets").innerText = totalBets.toFixed(2) + " FCFA"; // Afficher le total des mises
+                } else {
+                    document.getElementById("balance").innerText = "Aucun solde trouvé.";
+                }
+            } else {
+                document.getElementById("balance").innerText = "Veuillez vous connecter.";
+            }
+        });
+
+        // Fonction pour miser de l'argent
+        window.miser = async function() {
+            const betAmount = parseFloat(document.getElementById("betAmount").value);
+            const user = auth.currentUser;
+
+            if (user && !isNaN(betAmount) && betAmount > 0) {
+                const userRef = ref(database, 'users/' + user.uid);
+                const snapshot = await get(userRef);
+
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    const currentBalance = userData.balance;
+
+                    if (currentBalance >= betAmount) {
+                        totalBets += betAmount; // Ajouter la mise au total
+                        const newBalance = currentBalance - betAmount; // Déduire la mise du solde
+
+                        // Mettre à jour la base de données
+                        await update(userRef, { balance: newBalance, totalBets: totalBets });
+
+                        // Afficher les nouvelles valeurs
+                        document.getElementById("balance").innerText = newBalance.toFixed(2) + " FCFA";
+                        document.getElementById("totalBets").innerText = totalBets.toFixed(2) + " FCFA";
+                        document.getElementById("betAmount").value = ""; // Réinitialiser le champ de mise
+
+                        alert("Mise réussie de " + betAmount.toFixed(2) + " FCFA. Total des mises : " + totalBets.toFixed(2) + " FCFA.");
+                    } else {
+                        alert("Solde insuffisant pour cette mise.");
+                    }
+                }
+            } else {
+                alert("Veuillez entrer un montant valide pour miser.");
+            }
+        };
+
+        // Fonction de réclamation
+        window.reclamer = async function() {
+            const user = auth.currentUser;
+            if (user) {
+                const userRef = ref(database, 'users/' + user.uid);
+                const snapshot = await get(userRef);
+
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    const currentBalance = userData.balance;
+                    const lastClaimDate = userData.lastClaim ? new Date(userData.lastClaim) : null;
+                    const today = new Date();
+
+                    // Vérifie si une réclamation a été faite aujourd'hui
+                    if (lastClaimDate && lastClaimDate.toDateString() === today.toDateString()) {
+                        alert("Vous avez déjà réclamé aujourd'hui. Veuillez réessayer demain.");
+                        return; // Empêche la réclamation si déjà faite aujourd'hui
+                    }
+
+                    // Calculer le montant à réclamer (5 % du total des mises)
+                    const claimAmount = totalBets * 0.05;
+                    const newBalance = currentBalance + claimAmount;
+
+                    // Mettre à jour le solde et la date de réclamation dans la base de données
+                    await update(userRef, { balance: newBalance, lastClaim: today.toISOString(), totalBets: totalBets });
+
+                    // Afficher le nouveau solde sur la page, arrondi à deux décimales
+                    document.getElementById("balance").innerText = newBalance.toFixed(2) + " FCFA";
+                    document.getElementById("lastClaim").innerText = today.toLocaleDateString(); // Met à jour la date de la dernière réclamation
+
+                    // Masquer le popup après la réclamation
+                    togglePopup();
+                    alert("Réclamation réussie ! Votre nouveau solde est " + newBalance.toFixed(2) + " FCFA.");
+                }
+            } else {
+                alert("Veuillez vous connecter pour faire une réclamation.");
+            }
+        };
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 1em;
+            width: 100%;
+            text-align: center;
+            font-size: 24px;
+        }
+        .chart-container {
+            width: 80%;
+            max-width: 600px;
+            margin-top: 2em;
+        }
+        #popup-section {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 20px;
+            z-index: 10;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .info {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 18px;
+            color: #333;
+        }
+        #balance, #lastClaim, #totalBets {
+            font-weight: bold;
+            color: #007BFF;
+        }
+        .bet-section {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">Statistiques de la Semaine</div>
+    
+    <div class="chart-container">
+        <canvas id="weeklyChart"></canvas>
+    </div>
+
+    <div class="info">
+        <p>Votre solde actuel : <span id="balance">0.00 FCFA</span></p>
+        <p>Dernière réclamation : <span id="lastClaim">Jamais</span></p>
+        <p>Total des mises : <span id="totalBets">0.00 FCFA</span></p>
+    </div>
+
+    <div class="bet-section">
+        <h3>Miser de l'argent</h3>
+        <input type="number" id="betAmount" placeholder="Montant à miser" min="1" />
+        <button onclick="miser()">Miser</button>
+    </div>
+
+    <div>
+        <button onclick="togglePopup()">Réclamer 5%</button>
+    </div>
+
+    <div id="popup-section">
+        <p>Êtes-vous sûr de vouloir réclamer 5% de vos mises ?</p>
+        <button onclick="reclamer()">Confirmer</button>
+        <button onclick="togglePopup()">Annuler</button>
+    </div>
+
+    <script>
+        // Fonction pour afficher ou masquer le popup de réclamation
+        function togglePopup() {
+            const popup = document.getElementById("popup-section");
+            popup.style.display = (popup.style.display === "none" || popup.style.display === "") ? "block" : "none";
+        }
+    </script>
+</body>
+</html>
