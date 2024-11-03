@@ -18,7 +18,6 @@
             padding: 15px;
             text-align: center;
             font-size: 24px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         .chart-container {
@@ -26,52 +25,39 @@
             margin: 20px auto;
             background-color: white;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
         }
 
         .stats {
             margin-top: 20px;
             font-size: 20px;
-            font-weight: bold;
             text-align: center;
         }
 
         .input-group {
-            margin-top: 1em;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin-top: 20px;
+            text-align: center;
         }
 
         .input-group input {
-            width: 80%;
             padding: 10px;
-            margin: 5px 0;
-            border: 1px solid #ccc;
+            margin: 5px;
             border-radius: 5px;
+            border: 1px solid #ddd;
         }
 
         .input-group button {
-            width: 50%;
-            padding: 10px;
-            background-color: #007bff;
-            color: white;
+            padding: 10px 20px;
+            margin: 5px;
             border: none;
             border-radius: 5px;
+            background-color: #007bff;
+            color: white;
             cursor: pointer;
-            font-size: 16px;
         }
 
         .input-group button:hover {
             background-color: #0056b3;
-        }
-
-        footer {
-            margin-top: 2em;
-            font-size: 14px;
-            color: #777;
-            text-align: center;
         }
 
         #popup-section {
@@ -81,43 +67,28 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0,0,0,0.5);
             justify-content: center;
             align-items: center;
-            z-index: 1000;
         }
 
         .popup {
             background-color: white;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
             text-align: center;
         }
 
-        .popup h2 {
-            margin: 0 0 10px;
-        }
-
-        .popup button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .popup button:hover {
-            background-color: #45a049;
+        .countdown {
+            font-size: 18px;
+            color: #dc3545;
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
-
     <div class="header">
-        Statistiques de la Semaine
+        Système de Paris
     </div>
 
     <div class="chart-container">
@@ -127,119 +98,31 @@
     <div class="stats">
         <p>Solde: <span id="balance">0.00 FCFA</span></p>
         <p>Total des Mises: <span id="totalBets">0.00 FCFA</span></p>
+        <p>Date de Première Mise: <span id="firstBetDate">Aucune</span></p>
         <p>Dernière Réclamation: <span id="lastClaim">Jamais</span></p>
+        <p>Temps Restant: <span id="timeRemaining">-</span></p>
     </div>
 
     <div class="input-group">
-        <input type="number" id="betAmount" placeholder="Montant à miser (FCFA)" required>
+        <input type="number" id="betAmount" placeholder="Montant à miser (FCFA)">
         <button onclick="miser()">Miser</button>
-        <button onclick="togglePopup()">Faire une Réclamation</button>
+        <button onclick="togglePopup()">Réclamer</button>
     </div>
 
     <div id="popup-section">
         <div class="popup">
-            <h2>Faire une Réclamation</h2>
-            <p>Êtes-vous sûr de vouloir faire une réclamation ?</p>
-            <button onclick="reclamer()">Oui, Réclamer</button>
+            <h2>Confirmer la Réclamation</h2>
+            <p>Voulez-vous réclamer vos gains ?</p>
+            <button onclick="reclamer()">Confirmer</button>
             <button onclick="togglePopup()">Annuler</button>
         </div>
     </div>
 
-    <footer>
-        © 2024 Votre Site. Tous droits réservés.
-    </footer>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        let lastClaim = "Jamais";
-        let weeklyData = new Array(7).fill(0); // Initialisation avec des zéros
-        const ctx = document.getElementById('weeklyChart').getContext('2d');
-        
-        const weeklyChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'],
-                datasets: [{
-                    label: 'Mises Hebdomadaires',
-                    data: weeklyData,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4 // Lissage de la ligne
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Montant (FCFA)'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Jours de la Semaine'
-                        }
-                    }
-                },
-                animations: {
-                    tension: {
-                        duration: 1000,
-                        easing: 'easeInOutQuad',
-                        from: 1,
-                        to: 0,
-                        loop: true
-                    }
-                }
-            }
-        });
-
-        function miser() {
-            const betAmount = parseFloat(document.getElementById('betAmount').value);
-            if (isNaN(betAmount) || betAmount <= 0) {
-                alert("Veuillez entrer un montant valide pour la mise.");
-                return;
-            }
-
-            // Effacer le champ de saisie après mise
-            document.getElementById('betAmount').value = '';
-        }
-
-        function reclamer() {
-            lastClaim = new Date().toLocaleString();
-            document.getElementById('lastClaim').innerText = lastClaim;
-            togglePopup();
-        }
-
-        function togglePopup() {
-            const popupSection = document.getElementById("popup-section");
-            popupSection.style.display = (popupSection.style.display === "flex") ? "none" : "flex";
-        }
-
-        // Mettre à jour le graphique automatiquement toutes les 1 seconde avec des mises aléatoires
-        setInterval(() => {
-            const randomBet = Math.floor(Math.random() * 1000) + 100; // Mise aléatoire entre 100 et 1100
-            const dayIndex = new Date().getDay(); // Obtient le jour actuel (0 = Dimanche, 1 = Lundi, etc.)
-            weeklyData[dayIndex] += randomBet; // Ajouter la mise au jour actuel
-
-            updateChart();
-        }, 1000); // Mise à jour toutes les 1 seconde
-
-        function updateChart() {
-            weeklyChart.data.datasets[0].data = weeklyData;
-            weeklyChart.update();
-        }
-    </script>
-</body>
-
-<script type="module">
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-        import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+        import { getDatabase, ref, get, update, set } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCPQvlxIjvJPkMZQ4qElkHla_xQ5QiZfFs",
@@ -255,135 +138,198 @@
         const auth = getAuth(app);
         const database = getDatabase(app);
 
-        let totalBets = 0; // Variable pour suivre le total des mises
+        let firstBetDate = null;
+        let totalBets = 0;
+        let lastClaimDate = null;
+        let chart;
 
+        function initChart() {
+            const ctx = document.getElementById('weeklyChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'],
+                    datasets: [{
+                        label: 'Mises par jour',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                }
+            });
+        }
+
+        function hasClaimedToday() {
+            if (!lastClaimDate) return false;
+            const lastClaim = new Date(lastClaimDate);
+            const today = new Date();
+            return lastClaim.toDateString() === today.toDateString();
+        }
+
+        function updateTimeRemaining() {
+            if (!firstBetDate) {
+                document.getElementById('timeRemaining').textContent = "Pas de mise active";
+                return;
+            }
+
+            const now = new Date();
+            const betDate = new Date(firstBetDate);
+            const expiryDate = new Date(betDate.setMonth(betDate.getMonth() + 1));
+            
+            if (now > expiryDate) {
+                document.getElementById('timeRemaining').textContent = "Période expirée";
+                resetAccount();
+                return;
+            }
+
+            const timeLeft = expiryDate - now;
+            const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            
+            document.getElementById('timeRemaining').textContent = 
+                `${days} jours et ${hours} heures`;
+        }
+
+        async function resetAccount() {
+            const user = auth.currentUser;
+            if (user) {
+                const userRef = ref(database, 'users/' + user.uid);
+                await update(userRef, {
+                    totalBets: 0,
+                    firstBetDate: null,
+                    weeklyBets: [0,0,0,0,0,0,0],
+                    lastClaimDate: null
+                });
+                
+                firstBetDate = null;
+                totalBets = 0;
+                lastClaimDate = null;
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('totalBets').textContent = `${totalBets.toFixed(2)} FCFA`;
+            document.getElementById('firstBetDate').textContent = 
+                firstBetDate ? new Date(firstBetDate).toLocaleDateString() : "Aucune";
+            document.getElementById('lastClaim').textContent = 
+                lastClaimDate ? new Date(lastClaimDate).toLocaleDateString() : "Jamais";
+            updateTimeRemaining();
+        }
+
+        window.miser = async function() {
+            const betAmount = parseFloat(document.getElementById('betAmount').value);
+            if (isNaN(betAmount) || betAmount <= 0) {
+                alert("Veuillez entrer un montant valide");
+                return;
+            }
+
+            const user = auth.currentUser;
+            if (!user) {
+                alert("Veuillez vous connecter");
+                return;
+            }
+
+            const userRef = ref(database, 'users/' + user.uid);
+            const snapshot = await get(userRef);
+            const userData = snapshot.exists() ? snapshot.val() : {};
+            const currentBalance = userData.balance || 0;
+
+            // Vérification du solde suffisant
+            if (currentBalance < betAmount) {
+                alert("Solde insuffisant. Votre solde actuel est de " + currentBalance.toFixed(2) + " FCFA");
+                return;
+            }
+
+            // Déduire le montant du solde
+            const newBalance = currentBalance - betAmount;
+
+            if (!firstBetDate) {
+                firstBetDate = new Date().toISOString();
+            }
+
+            totalBets += betAmount;
+
+            await update(userRef, {
+                balance: newBalance,
+                totalBets: totalBets,
+                firstBetDate: firstBetDate,
+                lastBetAmount: betAmount,
+                lastBetDate: new Date().toISOString()
+            });
+
+            document.getElementById('betAmount').value = '';
+            document.getElementById('balance').textContent = `${newBalance.toFixed(2)} FCFA`;
+            updateUI();
+        };
+
+        window.reclamer = async function() {
+            const user = auth.currentUser;
+            if (!user || !firstBetDate) {
+                alert("Impossible de réclamer");
+                return;
+            }
+
+            // Vérifier si déjà réclamé aujourd'hui
+            if (hasClaimedToday()) {
+                alert("Vous avez déjà réclamé aujourd'hui. Revenez demain !");
+                return;
+            }
+
+            const now = new Date();
+            const betDate = new Date(firstBetDate);
+            const expiryDate = new Date(betDate.setMonth(betDate.getMonth() + 1));
+
+            if (now > expiryDate) {
+                alert("Période de réclamation expirée");
+                await resetAccount();
+                return;
+            }
+
+            const userRef = ref(database, 'users/' + user.uid);
+            const snapshot = await get(userRef);
+            const userData = snapshot.exists() ? snapshot.val() : {};
+
+            const gains = totalBets * 0.05; // 5% des mises totales
+            const newBalance = (userData.balance || 0) + gains;
+            lastClaimDate = now.toISOString();
+
+            await update(userRef, {
+                balance: newBalance,
+                lastClaimDate: lastClaimDate
+            });
+
+            document.getElementById('balance').textContent = `${newBalance.toFixed(2)} FCFA`;
+            document.getElementById('lastClaim').textContent = now.toLocaleDateString();
+            togglePopup();
+            alert(`Vous avez réclamé ${gains.toFixed(2)} FCFA`);
+        };
+
+        window.togglePopup = function() {
+            const popup = document.getElementById('popup-section');
+            popup.style.display = popup.style.display === 'flex' ? 'none' : 'flex';
+        };
+
+        // Initialisation
+        initChart();
+        setInterval(updateTimeRemaining, 1000);
+
+        // Écouter les changements d'authentification
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 const userRef = ref(database, 'users/' + user.uid);
                 const snapshot = await get(userRef);
                 if (snapshot.exists()) {
                     const userData = snapshot.val();
-                    document.getElementById("balance").innerText = userData.balance.toFixed(2) + " FCFA";
-                    document.getElementById("lastClaim").innerText = userData.lastClaim || "Jamais";
-                    totalBets = userData.totalBets || 0; // Récupérer le total des mises de la base de données
-                    document.getElementById("totalBets").innerText = totalBets.toFixed(2) + " FCFA"; // Afficher le total des mises
-
-                    // Mettre à jour le graphique
-                    updateChart(userData.weeklyBets || []);
-                } else {
-                    document.getElementById("balance").innerText = "Aucun solde trouvé.";
+                    firstBetDate = userData.firstBetDate;
+                    totalBets = userData.totalBets || 0;
+                    lastClaimDate = userData.lastClaimDate;
+                    document.getElementById('balance').textContent = 
+                        `${userData.balance ? userData.balance.toFixed(2) : '0.00'} FCFA`;
+                    updateUI();
                 }
-            } else {
-                document.getElementById("balance").innerText = "Veuillez vous connecter.";
             }
         });
-
-        const ctx = document.getElementById('weeklyChart').getContext('2d');
-        let weeklyChart;
-
-        function updateChart(data) {
-            const labels = data.map(item => item.day); // Supposons que chaque élément ait un jour
-            const values = data.map(item => item.amount); // Supposons que chaque élément ait un montant
-
-            if (weeklyChart) {
-                weeklyChart.destroy(); // Détruire l'ancien graphique
-            }
-
-            weeklyChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Mises Hebdomadaires',
-                        data: values,
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        }
-
-        // Fonction pour miser de l'argent
-        window.miser = async function() {
-            const betAmount = parseFloat(document.getElementById("betAmount").value);
-            const user = auth.currentUser;
-
-            if (user && !isNaN(betAmount) && betAmount > 0) {
-                const userRef = ref(database, 'users/' + user.uid);
-                const snapshot = await get(userRef);
-
-                if (snapshot.exists()) {
-                    const userData = snapshot.val();
-                    const currentBalance = userData.balance;
-
-                    if (currentBalance >= betAmount) {
-                        totalBets += betAmount; // Ajouter la mise au total
-                        const newBalance = currentBalance - betAmount; // Déduire la mise du solde
-
-                        // Mettre à jour la base de données
-                        await update(userRef, { balance: newBalance, totalBets: totalBets });
-
-                        // Afficher les nouvelles valeurs
-                        document.getElementById("balance").innerText = newBalance.toFixed(2) + " FCFA";
-                        document.getElementById("totalBets").innerText = totalBets.toFixed(2) + " FCFA";
-                        document.getElementById("betAmount").value = ""; // Réinitialiser le champ de mise
-
-                        alert("Mise réussie de " + betAmount.toFixed(2) + " FCFA. Total des mises : " + totalBets.toFixed(2) + " FCFA.");
-                    } else {
-                        alert("Solde insuffisant pour cette mise.");
-                    }
-                }
-            } else {
-                alert("Veuillez entrer un montant valide pour miser.");
-            }
-        };
-
-        // Fonction de réclamation
-        window.reclamer = async function() {
-            const user = auth.currentUser;
-            if (user) {
-                const userRef = ref(database, 'users/' + user.uid);
-                const snapshot = await get(userRef);
-
-                if (snapshot.exists()) {
-                    const userData = snapshot.val();
-                    const currentBalance = userData.balance;
-                    const lastClaimDate = userData.lastClaim ? new Date(userData.lastClaim) : null;
-                    const today = new Date();
-
-                    // Vérifie si une réclamation a été faite aujourd'hui
-                    if (lastClaimDate && lastClaimDate.toDateString() === today.toDateString()) {
-                        alert("Vous avez déjà réclamé aujourd'hui. Veuillez réessayer demain.");
-                        return; // Empêche la réclamation si déjà faite aujourd'hui
-                    }
-
-                    // Calculer le montant à réclamer (5 % du total des mises)
-                    const claimAmount = totalBets * 0.05;
-                    const newBalance = currentBalance + claimAmount;
-
-                    // Mettre à jour le solde et la date de réclamation dans la base de données
-                    await update(userRef, { balance: newBalance, lastClaim: today.toISOString(), totalBets: totalBets });
-
-                    // Afficher le nouveau solde sur la page, arrondi à deux décimales
-                    document.getElementById("balance").innerText = newBalance.toFixed(2) + " FCFA";
-                    document.getElementById("lastClaim").innerText = today.toLocaleDateString(); // Met à jour la date de la dernière réclamation
-
-                    // Masquer le popup après la réclamation
-                    togglePopup();
-                    alert("Réclamation réussie ! Votre nouveau solde est " + newBalance.toFixed(2) + " FCFA.");
-                }
-            } else {
-                alert("Veuillez vous connecter pour faire une réclamation.");
-            }
-        };
     </script>
+</body>
 </html>
