@@ -44,6 +44,7 @@
             margin: 5px;
             border-radius: 5px;
             border: 1px solid #ddd;
+            width: 200px;
         }
 
         .input-group button {
@@ -58,6 +59,13 @@
 
         .input-group button:hover {
             background-color: #0056b3;
+        }
+
+        .input-group .min-bet-info {
+            display: block;
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0;
         }
 
         #popup-section {
@@ -84,6 +92,13 @@
             color: #dc3545;
             margin: 10px 0;
         }
+
+        .error-message {
+            color: #dc3545;
+            display: none;
+            margin-top: 5px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -104,7 +119,15 @@
     </div>
 
     <div class="input-group">
-        <input type="number" id="betAmount" placeholder="Montant à miser (FCFA)">
+        <input 
+            type="number" 
+            id="betAmount" 
+            min="1000"
+            placeholder="Montant à miser (min. 1000 FCFA)"
+            onchange="validateBetAmount(this.value)"
+        >
+        <span class="min-bet-info">Mise minimum : 1000 FCFA</span>
+        <div id="error-message" class="error-message">Le montant minimum de mise est de 1000 FCFA</div>
         <button onclick="miser()">Miser</button>
         <button onclick="togglePopup()">Réclamer</button>
     </div>
@@ -142,6 +165,20 @@
         let totalBets = 0;
         let lastClaimDate = null;
         let chart;
+
+        // Validation du montant de mise
+        window.validateBetAmount = function(value) {
+            const errorMessage = document.getElementById('error-message');
+            const betAmount = parseFloat(value);
+            
+            if (betAmount < 1000) {
+                errorMessage.style.display = 'block';
+                return false;
+            }
+            
+            errorMessage.style.display = 'none';
+            return true;
+        };
 
         function initChart() {
             const ctx = document.getElementById('weeklyChart').getContext('2d');
@@ -219,8 +256,10 @@
 
         window.miser = async function() {
             const betAmount = parseFloat(document.getElementById('betAmount').value);
-            if (isNaN(betAmount) || betAmount <= 0) {
-                alert("Veuillez entrer un montant valide");
+            
+            // Vérification du montant minimum
+            if (isNaN(betAmount) || betAmount < 1000) {
+                alert("Le montant minimum de mise est de 1000 FCFA");
                 return;
             }
 
@@ -235,13 +274,11 @@
             const userData = snapshot.exists() ? snapshot.val() : {};
             const currentBalance = userData.balance || 0;
 
-            // Vérification du solde suffisant
             if (currentBalance < betAmount) {
                 alert("Solde insuffisant. Votre solde actuel est de " + currentBalance.toFixed(2) + " FCFA");
                 return;
             }
 
-            // Déduire le montant du solde
             const newBalance = currentBalance - betAmount;
 
             if (!firstBetDate) {
@@ -270,7 +307,6 @@
                 return;
             }
 
-            // Vérifier si déjà réclamé aujourd'hui
             if (hasClaimedToday()) {
                 alert("Vous avez déjà réclamé aujourd'hui. Revenez demain !");
                 return;
@@ -330,6 +366,12 @@
                 }
             }
         });
+
+        // Rendre les fonctions accessibles globalement
+        window.initChart = initChart;
+        window.updateTimeRemaining = updateTimeRemaining;
+        window.resetAccount = resetAccount;
+        window.updateUI = updateUI;
     </script>
 </body>
 </html>
