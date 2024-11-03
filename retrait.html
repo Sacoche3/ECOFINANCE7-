@@ -54,7 +54,12 @@
         #message {
             margin-top: 15px;
             text-align: center;
+        }
+        .error {
             color: #dc3545;
+        }
+        .success {
+            color: #28a745;
         }
         p {
             text-align: center;
@@ -67,14 +72,13 @@
     <div class="container">
         <div>
             <label for="montant">Montant à retirer (minimum 1000 FCFA) :</label>
-            <input type="number" id="montant" required>
+            <input type="number" id="montant" min="1000" required>
         </div>
         <div>
             <label for="codeSecret">Code secret du retrait :</label>
             <input type="password" id="codeSecret" required>
         </div>
-        <p>Frais de retrait : 5 % du montant demandé.</p>
-        <p>Vous pouvez lancer votre retrait une seul fois pas jour, vous pouvez aussi lancer votre retrait 24/24 7/7</p>
+        <p>Frais de retrait : 10 % du montant demandé.</p>
         <button id="btnRetirer">Retirer</button>
         <div id="message"></div>
     </div>
@@ -98,51 +102,94 @@
         const auth = getAuth(app);
         const database = getDatabase(app);
 
-        document.getElementById("btnRetirer").addEventListener("click", async () => {
-            const user = auth.currentUser;
-            if (user) {
-                const montant = parseFloat(document.getElementById("montant").value);
-                const codeSecret = document.getElementById("codeSecret").value;
+        // Fonction pour afficher les messages
+        function showMessage(message, isError = true) {
+            const messageElement = document.getElementById("message");
+            messageElement.innerText = message;
+            messageElement.className = isError ? 'error' : 'success';
+        }
 
-                // Vérification du montant minimum
-                if (montant < 1000) {
-                    document.getElementById("message").innerText = "Erreur : Le montant minimum de retrait est de 1000 FCFA.";
+        document.getElementById("btnRetirer").addEventListener("click", async () => {
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    showMessage("Veuillez vous connecter.");
                     return;
                 }
 
-                // Récupérer les données de l'utilisateur
+                // Récupération et validation des entrées
+                const montantInput = document.getElementById("montant");
+                const codeSecretInput = document.getElementById("codeSecret");
+                
+                const montant = parseFloat(montantInput.value);
+                const codeSecret = codeSecretInput.value.trim();
+
+                // Validations
+                if (!montant || isNaN(montant)) {
+                    showMessage("Veuillez entrer un montant valide.");
+                    return;
+                }
+
+                if (montant < 1000) {
+                    showMessage("Le montant minimum de retrait est de 1000 FCFA.");
+                    return;
+                }
+
+                if (!codeSecret) {
+                    showMessage("Veuillez entrer un code secret.");
+                    return;
+                }
+
+                // Récupération des données utilisateur
                 const userRef = ref(database, 'users/' + user.uid);
                 const snapshot = await get(userRef);
 
-                if (snapshot.exists()) {
-                    const userData = snapshot.val();
-                    const fraisRetrait = montant * 0.5; // 5 % de frais
-                    const montantTotalRetrait = montant + fraisRetrait; // Montant total à déduire
-
-                    // Vérifier si le code secret est correct et si le solde est suffisant
-                    if (userData.codeSecret === codeSecret && userData.balance >= montantTotalRetrait) {
-                        // Mettre à jour le solde de l'utilisateur
-                        const newBalance = userData.balance - montantTotalRetrait;
-                        await update(userRef, { balance: newBalance });
-
-                        // Enregistrer le retrait dans l'historique
-                        const historiqueRef = ref(database, 'users/' + user.uid + '/historiqueRetraits/' + Date.now());
-                        await set(historiqueRef, {
-                            montant: montant,
-                            frais: fraisRetrait,
-                            statut: 'Effectué',
-                            date: new Date().toISOString()
-                        });
-
-                        document.getElementById("message").innerText = "Retrait effectué avec succès.";
-                    } else {
-                        document.getElementById("message").innerText = "Erreur : Code secret incorrect ou solde insuffisant.";
-                    }
-                } else {
-                    document.getElementById("message").innerText = "Aucun utilisateur trouvé.";
+                if (!snapshot.exists()) {
+                    showMessage("Aucun utilisateur trouvé.");
+                    return;
                 }
-            } else {
-                document.getElementById("message").innerText = "Veuillez vous connecter.";
+
+                const userData = snapshot.val();
+                const fraisRetrait = montant * 0.10;
+                const montantTotalRetrait = montant + fraisRetrait;
+
+                // Débogage des codes secrets
+                console.log('Code secret entré:', codeSecret);
+                console.log('Code secret stocké:', userData.codeSecret);
+
+                // Vérification du code et du solde
+                if (String(userData.codeSecret) !== String(codeSecret)) {
+                    showMessage("Code secret incorrect.");
+                    return;
+                }
+
+                if (userData.balance < montantTotalRetrait) {
+                    showMessage("Solde insuffisant pour effectuer ce retrait.");
+                    return;
+                }
+
+                // Mise à jour du solde
+                const newBalance = userData.balance - montantTotalRetrait;
+                await update(userRef, { balance: newBalance });
+
+                // Enregistrement dans l'historique
+                const historiqueRef = ref(database, 'users/' + user.uid + '/historiqueRetraits/' + Date.now());
+                await set(historiqueRef, {
+                    montant: montant,
+                    frais: fraisRetrait,
+                    statut: 'Effectué',
+                    date: new Date().toISOString()
+                });
+
+                // Réinitialisation des champs
+                montantInput.value = '';
+                codeSecretInput.value = '';
+
+                showMessage("Retrait effectué avec succès! Nouveau solde: " + newBalance.toFixed(2) + " FCFA", false);
+
+            } catch (error) {
+                console.error("Erreur lors du retrait:", error);
+                showMessage("Une erreur est survenue lors du retrait. Veuillez réessayer.");
             }
         });
     </script>
