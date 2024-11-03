@@ -98,8 +98,7 @@
                                 <div class="details">
                                     <div><strong>Frais :</strong> ${details.frais ? details.frais.toLocaleString() + ' FCFA' : 'N/A'}</div>
                                     <div><strong>Date :</strong> ${formaterDate(details.date)}</div>
-                                    <div><strong>Statut :</strong> en attente</div> <!-- Modification ici -->
-                                </div>
+                                    <div><strong>Statut :</strong> ${details.statut}</div>                                </div>
                             `;
                             historiqueContainer.appendChild(item);
                         });
