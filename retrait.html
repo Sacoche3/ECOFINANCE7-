@@ -65,6 +65,16 @@
             text-align: center;
             color: #555;
         }
+        .fees-info {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .montant-details {
+            font-weight: bold;
+            color: #28a745;
+        }
     </style>
 </head>
 <body>
@@ -74,11 +84,15 @@
             <label for="montant">Montant à retirer (minimum 1000 FCFA) :</label>
             <input type="number" id="montant" min="1000" required>
         </div>
+        <div class="fees-info">
+            <p>Frais de retrait (10%) : <span id="fraisRetrait">0</span> FCFA</p>
+            <p class="montant-details">Vous recevrez : <span id="montantNet">0</span> FCFA</p>
+            <p>Montant total débité : <span id="montantTotal">0</span> FCFA</p>
+        </div>
         <div>
             <label for="codeSecret">Code secret du retrait :</label>
             <input type="password" id="codeSecret" required>
         </div>
-        <p>Frais de retrait : 10 % du montant demandé.</p>
         <button id="btnRetirer">Retirer</button>
         <div id="message"></div>
     </div>
@@ -102,7 +116,20 @@
         const auth = getAuth(app);
         const database = getDatabase(app);
 
-        // Fonction pour afficher les messages
+        // Fonction pour calculer et afficher les frais
+        function calculateFees() {
+            const montantDemande = parseFloat(document.getElementById("montant").value) || 0;
+            const fraisRetrait = Math.round(montantDemande * 0.10); // 10% du montant demandé
+            const montantNet = montantDemande - fraisRetrait; // Montant après déduction des frais
+
+            document.getElementById("fraisRetrait").textContent = fraisRetrait.toFixed(0);
+            document.getElementById("montantNet").textContent = montantNet.toFixed(0);
+            document.getElementById("montantTotal").textContent = montantDemande.toFixed(0);
+        }
+
+        // Écouter les changements de montant
+        document.getElementById("montant").addEventListener("input", calculateFees);
+
         function showMessage(message, isError = true) {
             const messageElement = document.getElementById("message");
             messageElement.innerText = message;
@@ -117,30 +144,30 @@
                     return;
                 }
 
-                // Récupération et validation des entrées
                 const montantInput = document.getElementById("montant");
                 const codeSecretInput = document.getElementById("codeSecret");
                 
-                const montant = parseFloat(montantInput.value);
+                const montantDemande = parseFloat(montantInput.value);
                 const codeSecret = codeSecretInput.value.trim();
 
-                // Validations
-                if (!montant || isNaN(montant)) {
+                if (!montantDemande || isNaN(montantDemande)) {
                     showMessage("Veuillez entrer un montant valide.");
                     return;
                 }
 
-                if (montant < 1000) {
+                if (montantDemande < 1000) {
                     showMessage("Le montant minimum de retrait est de 1000 FCFA.");
                     return;
                 }
+
+                const fraisRetrait = Math.round(montantDemande * 0.10);
+                const montantNet = montantDemande - fraisRetrait;
 
                 if (!codeSecret) {
                     showMessage("Veuillez entrer un code secret.");
                     return;
                 }
 
-                // Récupération des données utilisateur
                 const userRef = ref(database, 'users/' + user.uid);
                 const snapshot = await get(userRef);
 
@@ -150,42 +177,34 @@
                 }
 
                 const userData = snapshot.val();
-                const fraisRetrait = montant * 0.10;
-                const montantTotalRetrait = montant + fraisRetrait;
 
-                // Débogage des codes secrets
-                console.log('Code secret entré:', codeSecret);
-                console.log('Code secret stocké:', userData.codeSecret);
-
-                // Vérification du code et du solde
                 if (String(userData.codeSecret) !== String(codeSecret)) {
                     showMessage("Code secret incorrect.");
                     return;
                 }
 
-                if (userData.balance < montantTotalRetrait) {
+                if (userData.balance < montantDemande) {
                     showMessage("Solde insuffisant pour effectuer ce retrait.");
                     return;
                 }
 
-                // Mise à jour du solde
-                const newBalance = userData.balance - montantTotalRetrait;
+                const newBalance = userData.balance - montantDemande;
                 await update(userRef, { balance: newBalance });
 
-                // Enregistrement dans l'historique
                 const historiqueRef = ref(database, 'users/' + user.uid + '/historiqueRetraits/' + Date.now());
                 await set(historiqueRef, {
-                    montant: montant,
+                    montantDemande: montantDemande,
+                    montantNet: montantNet,
                     frais: fraisRetrait,
                     statut: 'Effectué',
                     date: new Date().toISOString()
                 });
 
-                // Réinitialisation des champs
                 montantInput.value = '';
                 codeSecretInput.value = '';
+                calculateFees();
 
-                showMessage("Retrait effectué avec succès! Nouveau solde: " + newBalance.toFixed(2) + " FCFA", false);
+                showMessage(`Retrait effectué avec succès! Vous recevrez ${montantNet.toFixed(0)} FCFA après déduction des frais de ${fraisRetrait.toFixed(0)} FCFA. Nouveau solde: ${newBalance.toFixed(0)} FCFA`, false);
 
             } catch (error) {
                 console.error("Erreur lors du retrait:", error);
