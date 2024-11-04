@@ -88,17 +88,19 @@
                     if (snapshot.exists()) {
                         const historiqueData = snapshot.val();
                         const entries = Object.entries(historiqueData)
-                            .sort(([dateA], [dateB]) => new Date(dateB) - new Date(dateA));
+                            .sort(([dateA], [dateB]) => dateB - dateA);
 
                         entries.forEach(([date, details]) => {
                             const item = document.createElement("div");
                             item.className = "historique-item";
                             item.innerHTML = `
-                                <div class="montant">${details.montant.toLocaleString()} FCFA</div>
+                                <div class="montant">Montant demandé: ${details.montantDemande.toLocaleString()} FCFA</div>
                                 <div class="details">
-                                    <div><strong>Frais :</strong> ${details.frais ? details.frais.toLocaleString() + ' FCFA' : 'N/A'}</div>
+                                    <div><strong>Montant net :</strong> ${details.montantNet.toLocaleString()} FCFA</div>
+                                    <div><strong>Frais :</strong> ${details.frais.toLocaleString()} FCFA</div>
                                     <div><strong>Date :</strong> ${formaterDate(details.date)}</div>
-                                    <div><strong>Statut :</strong> ${details.statut}</div>                                </div>
+                                    <div><strong>Statut :</strong> ${details.statut}</div>
+                                </div>
                             `;
                             historiqueContainer.appendChild(item);
                         });
@@ -110,7 +112,6 @@
                     messageContainer.innerText = "Impossible de charger l'historique : " + error.message;
                 }
             } else {
-                // Aucune action n'est nécessaire ici pour les utilisateurs non connectés
                 historiqueContainer.innerHTML = `<div>Aucun retrait effectué.</div>`;
             }
         }
@@ -120,7 +121,6 @@
             if (user) {
                 recupererHistoriqueRetraits();
             } else {
-                // Aucune action n'est nécessaire ici pour les utilisateurs non connectés
                 document.getElementById("historiqueContainer").innerHTML = `<div>Aucun retrait effectué.</div>`;
             }
         });
