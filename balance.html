@@ -229,14 +229,14 @@
         </div>
 
         <div class="card telegram-card">
-            <a href="https://chat.whatsapp.com/J3DcFOdCUa7BPmjJpYhSGP">
+            <a href="https://t.me/+E0fjkVdDiTFhYTI8">
                 <span>📱</span>
                 <span>Rejoignez notre groupe Telegram</span>
             </a>
         </div>
 
         <div class="card bank-card">
-            <h3>BANQUE-ECOFINANCE</h3>
+            <h3>ECOFINANCE</h3>
         </div>
     </div>
 
@@ -246,7 +246,7 @@
             <a href="retrait.html"><button class="popup-button">Retrait</button></a>
             <a href="lier_portefeuille.html"><button class="popup-button">Compte</button></a>
             <a href="historique.html"><button class="popup-button">Historique</button></a>
-            <a href="star.html"><button class="popup-button">BANQUE</button></a>
+            <a href="star.html"><button class="popup-button">Statistique</button></a>
         </div>
     </div>
 
@@ -271,73 +271,73 @@
     </div>
 
     <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-    import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyCPQvlxIjvJPkMZQ4qElkHla_xQ5QiZfFs",
-        authDomain: "paris-3df9f.firebaseapp.com",
-        databaseURL: "https://paris-3df9f-default-rtdb.firebaseio.com",
-        projectId: "paris-3df9f",
-        storageBucket: "paris-3df9f.appspot.com",
-        messagingSenderId: "365107415196",
-        appId: "1:365107415196:web:4c0021baec5a51a0f50559"
-    };
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPQvlxIjvJPkMZQ4qElkHla_xQ5QiZfFs",
+            authDomain: "paris-3df9f.firebaseapp.com",
+            databaseURL: "https://paris-3df9f-default-rtdb.firebaseio.com",
+            projectId: "paris-3df9f",
+            storageBucket: "paris-3df9f.appspot.com",
+            messagingSenderId: "365107415196",
+            appId: "1:365107415196:web:4c0021baec5a51a0f50559"
+        };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const database = getDatabase(app);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
 
-    async function initializeUserAccount(user) {
-        const userRef = ref(database, 'users/' + user.uid);
-        const snapshot = await get(userRef);
-        if (!snapshot.exists()) {
-            await set(userRef, {
-                email: user.email,
-                balance: 200,
-                createdAt: new Date().toISOString()
-            });
-            console.log("Nouveau compte créé avec 200F");
-        }
-    }
-
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            document.getElementById("email").innerText = user.email;
-            await initializeUserAccount(user);
+        async function initializeUserAccount(user) {
             const userRef = ref(database, 'users/' + user.uid);
-            onValue(userRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const userData = snapshot.val();
-                    // Correction de l'affichage avec .toFixed(2)
-                    document.getElementById('balance').textContent = `${userData.balance.toFixed(2)} FCFA`;
-                }
-            });
-        } else {
-            document.getElementById("balance").innerText = "Veuillez vous connecter";
-            document.getElementById("email").innerText = "Non connecté";
+            const snapshot = await get(userRef);
+            if (!snapshot.exists()) {
+                await set(userRef, {
+                    email: user.email,
+                    balance: 200,
+                    createdAt: new Date().toISOString()
+                });
+                console.log("Nouveau compte créé avec 200F");
+            }
         }
-    });
 
-    window.createAccount = async function(email, password) {
-        try {
-            await createUserWithEmailAndPassword(auth, email, password);
-        } catch (error) {
-            console.error("Erreur lors de la création du compte:", error);
-            throw error;
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                document.getElementById("email").innerText = user.email;
+                await initializeUserAccount(user);
+                const userRef = ref(database, 'users/' + user.uid);
+                onValue(userRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const userData = snapshot.val();
+                        document.getElementById("balance").innerText = `${userData.balance} FCFA`;
+                    }
+                });
+            } else {
+                document.getElementById("balance").innerText = "Veuillez vous connecter";
+                document.getElementById("email").innerText = "Non connecté";
+            }
+        });
+
+        window.createAccount = async function(email, password) {
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                console.error("Erreur lors de la création du compte:", error);
+                throw error;
+            }
         }
-    }
-</script>
+    </script>
 
-<script>
-    function togglePopup() {
-        const popup = document.getElementById("popup-section");
-        popup.style.display = popup.style.display === "none" || popup.style.display === "" ? "block" : "none";
-    }
+    <script>
+        function togglePopup() {
+            const popup = document.getElementById("popup-section");
+            popup.style.display = popup.style.display === "none" || popup.style.display === "" ? "block" : "none";
+        }
 
-    document.addEventListener("DOMContentLoaded", function() {
-        document.getElementById("popup-section").style.display = "none";
-    });
-</script></body>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("popup-section").style.display = "none";
+        });
+    </script>
+</body>
 </html> 
