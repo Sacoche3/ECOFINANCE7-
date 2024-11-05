@@ -2,36 +2,62 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Statistiques de Mise</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #e9ecef;
+        :root {
+            --primary-color: #007bff;
+            --danger-color: #dc3545;
+            --background-color: #e9ecef;
+            --card-background: #ffffff;
+            --text-color: #333333;
+        }
+
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 20px;
         }
 
         .header {
-            background-color: #007bff;
+            background-color: var(--primary-color);
             color: white;
             padding: 15px;
             text-align: center;
             font-size: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         .chart-container {
             width: 80%;
             margin: 20px auto;
-            background-color: white;
+            background-color: var(--card-background);
             border-radius: 10px;
             padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         .stats {
             margin-top: 20px;
-            font-size: 20px;
+            font-size: 18px;
             text-align: center;
+        }
+
+        .stats p {
+            margin: 8px 0;
+        }
+
+        .stats span {
+            font-weight: bold;
         }
 
         .input-group {
@@ -42,19 +68,22 @@
         .input-group input {
             padding: 10px;
             margin: 5px;
-            border-radius: 5px;
+            border-radius: 8px;
             border: 1px solid #ddd;
             width: 200px;
+            font-size: 16px;
         }
 
         .input-group button {
             padding: 10px 20px;
             margin: 5px;
             border: none;
-            border-radius: 5px;
-            background-color: #007bff;
+            border-radius: 8px;
+            background-color: var(--primary-color);
             color: white;
+            font-size: 16px;
             cursor: pointer;
+            transition: background-color 0.2s;
         }
 
         .input-group button:hover {
@@ -81,20 +110,21 @@
         }
 
         .popup {
-            background-color: white;
+            background-color: var(--card-background);
             padding: 20px;
             border-radius: 10px;
             text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
 
         .countdown {
             font-size: 18px;
-            color: #dc3545;
+            color: var(--danger-color);
             margin: 10px 0;
         }
 
         .error-message {
-            color: #dc3545;
+            color: var(--danger-color);
             display: none;
             margin-top: 5px;
             font-size: 14px;
@@ -103,7 +133,7 @@
 </head>
 <body>
     <div class="header">
-        BANQUE-ECOFINANCE 
+        BANQUE-ECOFINANCE
     </div>
 
     <div class="chart-container">
@@ -142,236 +172,236 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-    import { getDatabase, ref, get, update, set } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getDatabase, ref, get, update, set } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyCPQvlxIjvJPkMZQ4qElkHla_xQ5QiZfFs",
-        authDomain: "paris-3df9f.firebaseapp.com",
-        databaseURL: "https://paris-3df9f-default-rtdb.firebaseio.com",
-        projectId: "paris-3df9f",
-        storageBucket: "paris-3df9f.appspot.com",
-        messagingSenderId: "365107415196",
-        appId: "1:365107415196:web:4c0021baec5a51a0f50559"
-    };
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPQvlxIjvJPkMZQ4qElkHla_xQ5QiZfFs",
+            authDomain: "paris-3df9f.firebaseapp.com",
+            databaseURL: "https://paris-3df9f-default-rtdb.firebaseio.com",
+            projectId: "paris-3df9f",
+            storageBucket: "paris-3df9f.appspot.com",
+            messagingSenderId: "365107415196",
+            appId: "1:365107415196:web:4c0021baec5a51a0f50559"
+        };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const database = getDatabase(app);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
 
-    let firstBetDate = null;
-    let totalBets = 0;
-    let lastClaimDate = null;
-    let chart;
+        let firstBetDate = null;
+        let totalBets = 0;
+        let lastClaimDate = null;
+        let chart;
 
-    // Validation du montant de mise
-    window.validateBetAmount = function(value) {
-        const errorMessage = document.getElementById('error-message');
-        const betAmount = parseFloat(value);
-        
-        if (betAmount < 1500) {
-            errorMessage.style.display = 'block';
-            return false;
-        }
-        
-        errorMessage.style.display = 'none';
-        return true;
-    };
-
-    function initChart() {
-        const ctx = document.getElementById('weeklyChart').getContext('2d');
-        chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'],
-                datasets: [{
-                    label: 'Mises par jour',
-                    data: [0, 0, 0, 0, 0, 0, 0],
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
-                }]
-            }
-        });
-    }
-
-    function hasClaimedToday() {
-        if (!lastClaimDate) return false;
-        const lastClaim = new Date(lastClaimDate);
-        const today = new Date();
-        return lastClaim.toDateString() === today.toDateString();
-    }
-
-    function updateTimeRemaining() {
-        if (!firstBetDate) {
-            document.getElementById('timeRemaining').textContent = "Pas de mise active";
-            return;
-        }
-
-        const now = new Date();
-        const betDate = new Date(firstBetDate);
-        const expiryDate = new Date(betDate.setDate(betDate.getDate() + 16)); // 16 jours pour l'expiration
-        
-        if (now > expiryDate) {
-            document.getElementById('timeRemaining').textContent = "Période expirée";
-            resetAccount();
-            return;
-        }
-
-        const timeLeft = expiryDate - now;
-        const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        
-        document.getElementById('timeRemaining').textContent = 
-            `${days} jours et ${hours} heures`;
-    }
-
-    async function resetAccount() {
-        const user = auth.currentUser;
-        if (user) {
-            const userRef = ref(database, 'users/' + user.uid);
-            await update(userRef, {
-                totalBets: 0,
-                firstBetDate: null,
-                weeklyBets: [0,0,0,0,0,0,0],
-                lastClaimDate: null
-            });
+        // Validation du montant de mise
+        window.validateBetAmount = function(value) {
+            const errorMessage = document.getElementById('error-message');
+            const betAmount = parseFloat(value);
             
-            firstBetDate = null;
-            totalBets = 0;
-            lastClaimDate = null;
-            updateUI();
-        }
-    }
+            if (betAmount < 1000) {
+                errorMessage.style.display = 'block';
+                return false;
+            }
+            
+            errorMessage.style.display = 'none';
+            return true;
+        };
 
-    function updateUI() {
-        document.getElementById('totalBets').textContent = `${totalBets.toFixed(2)} FCFA`;
-        document.getElementById('firstBetDate').textContent = 
-            firstBetDate ? new Date(firstBetDate).toLocaleDateString() : "Aucune";
-        document.getElementById('lastClaim').textContent = 
-            lastClaimDate ? new Date(lastClaimDate).toLocaleDateString() : "Jamais";
-        updateTimeRemaining();
-    }
-
-    window.miser = async function() {
-        const betAmount = parseFloat(document.getElementById('betAmount').value);
-        
-        // Vérification du montant minimum
-        if (isNaN(betAmount) || betAmount < 1500) {
-            alert("Le montant minimum de mise est de 1500 FCFA");
-            return;
-        }
-
-        const user = auth.currentUser;
-        if (!user) {
-            alert("Veuillez vous connecter");
-            return;
+        function initChart() {
+            const ctx = document.getElementById('weeklyChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'],
+                    datasets: [{
+                        label: 'Mises par jour',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                }
+            });
         }
 
-        const userRef = ref(database, 'users/' + user.uid);
-        const snapshot = await get(userRef);
-        const userData = snapshot.exists() ? snapshot.val() : {};
-        const currentBalance = userData.balance || 0;
-
-        if (currentBalance < betAmount) {
-            alert("Solde insuffisant. Votre solde actuel est de " + currentBalance.toFixed(2) + " FCFA");
-            return;
+        function hasClaimedToday() {
+            if (!lastClaimDate) return false;
+            const lastClaim = new Date(lastClaimDate);
+            const today = new Date();
+            return lastClaim.toDateString() === today.toDateString();
         }
 
-        const newBalance = currentBalance - betAmount;
+        function updateTimeRemaining() {
+            if (!firstBetDate) {
+                document.getElementById('timeRemaining').textContent = "Pas de mise active";
+                return;
+            }
 
-        if (!firstBetDate) {
-            firstBetDate = new Date().toISOString();
+            const now = new Date();
+            const betDate = new Date(firstBetDate);
+            const expiryDate = new Date(betDate.setMonth(betDate.getMonth() + 1));
+            
+            if (now > expiryDate) {
+                document.getElementById('timeRemaining').textContent = "Période expirée";
+                resetAccount();
+                return;
+            }
+
+            const timeLeft = expiryDate - now;
+            const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            
+            document.getElementById('timeRemaining').textContent = 
+                `${days} jours et ${hours} heures`;
         }
 
-        totalBets += betAmount;
-
-        await update(userRef, {
-            balance: newBalance,
-            totalBets: totalBets,
-            firstBetDate: firstBetDate,
-            lastBetAmount: betAmount,
-            lastBetDate: new Date().toISOString()
-        });
-
-        document.getElementById('betAmount').value = '';
-        document.getElementById('balance').textContent = `${newBalance.toFixed(2)} FCFA`;
-        updateUI();
-    };
-
-    window.reclamer = async function() {
-        const user = auth.currentUser;
-        if (!user || !firstBetDate) {
-            alert("Impossible de réclamer");
-            return;
-        }
-
-        if (hasClaimedToday()) {
-            alert("Vous avez déjà réclamé aujourd'hui. Revenez demain !");
-            return;
-        }
-
-        const now = new Date();
-        const betDate = new Date(firstBetDate);
-        const expiryDate = new Date(betDate.setDate(betDate.getDate() + 16)); // 16 jours pour l'expiration
-
-        if (now > expiryDate) {
-            alert("Période de réclamation expirée");
-            await resetAccount();
-            return;
-        }
-
-        const userRef = ref(database, 'users/' + user.uid);
-        const snapshot = await get(userRef);
-        const userData = snapshot.exists() ? snapshot.val() : {};
-
-        const gains = totalBets * 0.10; // 10% des mises totales
-        const newBalance = (userData.balance || 0) + gains;
-        lastClaimDate = now.toISOString();
-
-        await update(userRef, {
-            balance: newBalance,
-            lastClaimDate: lastClaimDate
-        });
-
-        document.getElementById('balance').textContent = `${newBalance.toFixed(2)} FCFA`;
-        document.getElementById('lastClaim').textContent = now.toLocaleDateString();
-        togglePopup();
-        alert(`Vous avez réclamé ${gains.toFixed(2)} FCFA`);
-    };
-
-    window.togglePopup = function() {
-        const popup = document.getElementById('popup-section');
-        popup.style.display = popup.style.display === 'flex' ? 'none' : 'flex';
-    };
-
-    // Initialisation
-    initChart();
-    setInterval(updateTimeRemaining, 1000);
-
-    // Écouter les changements d'authentification
-    auth.onAuthStateChanged(async (user) => {
-        if (user) {
-            const userRef = ref(database, 'users/' + user.uid);
-            const snapshot = await get(userRef);
-            if (snapshot.exists()) {
-                const userData = snapshot.val();
-                firstBetDate = userData.firstBetDate;
-                totalBets = userData.totalBets || 0;
-                lastClaimDate = userData.lastClaimDate;
-                document.getElementById('balance').textContent = 
-                    `${userData.balance ? userData.balance.toFixed(2) : '0.00'} FCFA`;
+        async function resetAccount() {
+            const user = auth.currentUser;
+            if (user) {
+                const userRef = ref(database, 'users/' + user.uid);
+                await update(userRef, {
+                    totalBets: 0,
+                    firstBetDate: null,
+                    weeklyBets: [0,0,0,0,0,0,0],
+                    lastClaimDate: null
+                });
+                
+                firstBetDate = null;
+                totalBets = 0;
+                lastClaimDate = null;
                 updateUI();
             }
         }
-    });
 
-    // Rendre les fonctions accessibles globalement
-    window.initChart = initChart;
-    window.updateTimeRemaining = updateTimeRemaining;
-    window.resetAccount = resetAccount;
-    window.updateUI = updateUI;
-</script>
+        function updateUI() {
+            document.getElementById('totalBets').textContent = `${totalBets.toFixed(2)} FCFA`;
+            document.getElementById('firstBetDate').textContent = 
+                firstBetDate ? new Date(firstBetDate).toLocaleDateString() : "Aucune";
+            document.getElementById('lastClaim').textContent = 
+                lastClaimDate ? new Date(lastClaimDate).toLocaleDateString() : "Jamais";
+            updateTimeRemaining();
+        }
+
+        window.miser = async function() {
+            const betAmount = parseFloat(document.getElementById('betAmount').value);
+            
+            // Vérification du montant minimum
+            if (isNaN(betAmount) || betAmount < 1000) {
+                alert("Le montant minimum de mise est de 1000 FCFA");
+                return;
+            }
+
+            const user = auth.currentUser;
+            if (!user) {
+                alert("Veuillez vous connecter");
+                return;
+            }
+
+            const userRef = ref(database, 'users/' + user.uid);
+            const snapshot = await get(userRef);
+            const userData = snapshot.exists() ? snapshot.val() : {};
+            const currentBalance = userData.balance || 0;
+
+            if (currentBalance < betAmount) {
+                alert("Solde insuffisant. Votre solde actuel est de " + currentBalance.toFixed(2) + " FCFA");
+                return;
+            }
+
+            const newBalance = currentBalance - betAmount;
+
+            if (!firstBetDate) {
+                firstBetDate = new Date().toISOString();
+            }
+
+            totalBets += betAmount;
+
+            await update(userRef, {
+                balance: newBalance,
+                totalBets: totalBets,
+                firstBetDate: firstBetDate,
+                lastBetAmount: betAmount,
+                lastBetDate: new Date().toISOString()
+            });
+
+            document.getElementById('betAmount').value = '';
+            document.getElementById('balance').textContent = `${newBalance.toFixed(2)} FCFA`;
+            updateUI();
+        };
+
+        window.reclamer = async function() {
+            const user = auth.currentUser;
+            if (!user || !firstBetDate) {
+                alert("Impossible de réclamer");
+                return;
+            }
+
+            if (hasClaimedToday()) {
+                alert("Vous avez déjà réclamé aujourd'hui. Revenez demain !");
+                return;
+            }
+
+            const now = new Date();
+            const betDate = new Date(firstBetDate);
+            const expiryDate = new Date(betDate.setMonth(betDate.getMonth() + 1));
+
+            if (now > expiryDate) {
+                alert("Période de réclamation expirée");
+                await resetAccount();
+                return;
+            }
+
+            const userRef = ref(database, 'users/' + user.uid);
+            const snapshot = await get(userRef);
+            const userData = snapshot.exists() ? snapshot.val() : {};
+
+            const gains = totalBets * 0.05; // 5% des mises totales
+            const newBalance = (userData.balance || 0) + gains;
+            lastClaimDate = now.toISOString();
+
+            await update(userRef, {
+                balance: newBalance,
+                lastClaimDate: lastClaimDate
+            });
+
+            document.getElementById('balance').textContent = `${newBalance.toFixed(2)} FCFA`;
+            document.getElementById('lastClaim').textContent = now.toLocaleDateString();
+            togglePopup();
+            alert(`Vous avez réclamé ${gains.toFixed(2)} FCFA`);
+        };
+
+        window.togglePopup = function() {
+            const popup = document.getElementById('popup-section');
+            popup.style.display = popup.style.display === 'flex' ? 'none' : 'flex';
+        };
+
+        // Initialisation
+        initChart();
+        setInterval(updateTimeRemaining, 1000);
+
+        // Écouter les changements d'authentification
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                const userRef = ref(database, 'users/' + user.uid);
+                const snapshot = await get(userRef);
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    firstBetDate = userData.firstBetDate;
+                    totalBets = userData.totalBets || 0;
+                    lastClaimDate = userData.lastClaimDate;
+                    document.getElementById('balance').textContent = 
+                        `${userData.balance ? userData.balance.toFixed(2) : '0.00'} FCFA`;
+                    updateUI();
+                }
+            }
+        });
+
+        // Rendre les fonctions accessibles globalement
+        window.initChart = initChart;
+        window.updateTimeRemaining = updateTimeRemaining;
+        window.resetAccount = resetAccount;
+        window.updateUI = updateUI;
+    </script>
 </body>
 </html>
