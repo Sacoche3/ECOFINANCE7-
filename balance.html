@@ -39,6 +39,11 @@
             padding: 20px;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
             margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
         }
 
         .profile-card {
@@ -94,6 +99,11 @@
         .telegram-card {
             background: var(--primary-color);
             color: white;
+            transition: transform 0.3s ease;
+        }
+
+        .telegram-card:hover {
+            transform: translateY(-5px);
         }
 
         .telegram-card a {
@@ -112,6 +122,11 @@
             height: 160px;
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
+            transition: transform 0.3s ease;
+        }
+
+        .bank-card:hover {
+            transform: translateY(-5px);
         }
 
         .quick-actions {
@@ -129,12 +144,13 @@
             color: var(--text-color);
             font-size: 14px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, transform 0.2s;
             box-shadow: 0 2px 4px rgb(0 0 0 / 0.1);
         }
 
         .action-button:hover {
             background-color: #f1f5f9;
+            transform: translateY(-2px);
         }
 
         .footer {
@@ -160,6 +176,11 @@
             align-items: center;
             gap: 4px;
             cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .footer-button:hover {
+            color: var(--primary-color);
         }
 
         .center-button {
@@ -175,6 +196,12 @@
             border: none;
             cursor: pointer;
             box-shadow: 0 4px 6px rgb(0 0 0 / 0.1);
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .center-button:hover {
+            transform: translateY(-2px);
+            background-color: var(--secondary-color);
         }
 
         .popup-menu {
@@ -205,11 +232,12 @@
             color: var(--text-color);
             font-size: 14px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, transform 0.2s;
         }
 
         .popup-button:hover {
             background: #f1f5f9;
+            transform: translateY(-2px);
         }
     </style>
 </head>
@@ -271,73 +299,59 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCPQvlxIjvJPkMZQ4qElkHla_xQ5QiZfFs",
-            authDomain: "paris-3df9f.firebaseapp.com",
-            databaseURL: "https://paris-3df9f-default-rtdb.firebaseio.com",
-            projectId: "paris-3df9f",
-            storageBucket: "paris-3df9f.appspot.com",
-            messagingSenderId: "365107415196",
-            appId: "1:365107415196:web:4c0021baec5a51a0f50559"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyCPQvlxIjvJPkMZQ4qElkHla_xQ5QiZfFs",
+        authDomain: "paris-3df9f.firebaseapp.com",
+        databaseURL: "https://paris-3df9f-default-rtdb.firebaseio.com",
+        projectId: "paris-3df9f",
+        storageBucket: "paris-3df9f.appspot.com",
+        messagingSenderId: "365107415196",
+        appId: "1:365107415196:web:4c0021baec5a51a0f50559"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const database = getDatabase(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
 
-        async function initializeUserAccount(user) {
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
             const userRef = ref(database, 'users/' + user.uid);
             const snapshot = await get(userRef);
-            if (!snapshot.exists()) {
-                await set(userRef, {
-                    email: user.email,
-                    balance: 200,
-                    createdAt: new Date().toISOString()
-                });
-                console.log("Nouveau compte créé avec 200F");
-            }
-        }
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                document.getElementById("email").innerText = user.email;
-                await initializeUserAccount(user);
-                const userRef = ref(database, 'users/' + user.uid);
-                onValue(userRef, (snapshot) => {
-                    if (snapshot.exists()) {
-                        const userData = snapshot.val();
-                        document.getElementById("balance").innerText = `${userData.balance} FCFA`;
-                    }
-                });
+            if (snapshot.exists()) {
+                const userData = snapshot.val();
+                // Convertir le solde en nombre avec deux décimales
+                const balance = parseFloat(userData.balance).toFixed(2);
+                document.getElementById("balance").innerText = balance + " FCFA";
+                document.getElementById("email").innerText = user.email; // Affiche l'email de l'utilisateur
             } else {
-                document.getElementById("balance").innerText = "Veuillez vous connecter";
-                document.getElementById("email").innerText = "Non connecté";
+                document.getElementById("balance").innerText = "Aucun solde trouvé.";
             }
-        });
-
-        window.createAccount = async function(email, password) {
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                console.error("Erreur lors de la création du compte:", error);
-                throw error;
-            }
+        } else {
+            document.getElementById("balance").innerText = "Veuillez vous connecter.";
         }
-    </script>
+    });
+</script>
 
-    <script>
-        function togglePopup() {
-            const popup = document.getElementById("popup-section");
-            popup.style.display = popup.style.display === "none" || popup.style.display === "" ? "block" : "none";
+<script>
+    // Fonction pour basculer l'affichage de la section popup
+    function togglePopup() {
+        const popup = document.getElementById("popup-section");
+        if (popup.style.display === "none" || popup.style.display === "") {
+            popup.style.display = "block"; // Afficher le popup
+        } else {
+            popup.style.display = "none"; // Masquer le popup
         }
+    }
 
-        document.addEventListener("DOMContentLoaded", function() {
-            document.getElementById("popup-section").style.display = "none";
-        });
-    </script>
+    // Masquer le popup au chargement de la page
+    document.addEventListener("DOMContentLoaded", function() {
+        const popup = document.getElementById("popup-section");
+        popup.style.display = "none"; // Masquer le popup au départ
+    });
+</script>
 </body>
-</html> 
+</html>
