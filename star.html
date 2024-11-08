@@ -122,12 +122,12 @@
         <input 
             type="number" 
             id="betAmount" 
-            min="1500"
-            placeholder="Montant à miser (min. 1500 FCFA)"
+            min="3500"
+            placeholder="Montant à miser (min. 3500 FCFA)"
             onchange="validateBetAmount(this.value)"
         >
-        <span class="min-bet-info">Mise minimum : 1500 FCFA</span>
-        <div id="error-message" class="error-message">Le montant minimum de mise est de 1500 FCFA</div>
+        <span class="min-bet-info">Mise minimum : 3500 FCFA</span>
+        <div id="error-message" class="error-message">Le montant minimum de mise est de 3500 FCFA</div>
         <button onclick="miser()">Miser</button>
         <button onclick="togglePopup()">Réclamer</button>
     </div>
@@ -258,8 +258,8 @@
         const betAmount = parseFloat(document.getElementById('betAmount').value);
         
         // Vérification du montant minimum
-        if (isNaN(betAmount) || betAmount < 1500) {
-            alert("Le montant minimum de mise est de 1500 FCFA");
+        if (isNaN(betAmount) || betAmount < 3500) {
+            alert("Le montant minimum de mise est de 3500 FCFA");
             return;
         }
 
